@@ -18,7 +18,9 @@ defmodule App.Mixfile do
   end
 
   defp deps do
-    [{:nadia, "~> 0.4.1"}]
+    [{:nadia, "~> 0.6.0"}
+     # {:hackney, github: "benoitc/hackney", override: true}
+]
   end
 
   defp aliases do
