@@ -22,6 +22,11 @@ defmodule App.Poller do
     {:noreply, new_offset + 1, 100}
   end
 
+  def handle_info({:ssl_closed, _}, state) do
+    Logger.log(:error, "FIXME: ssl_closed")
+    {:noreply, state}
+  end
+
   def handle_info(:timeout, offset) do
     update()
     {:noreply, offset}
@@ -49,7 +54,7 @@ defmodule App.Poller do
   end
 
   defp process_messages({:error, %Nadia.Model.Error{reason: reason}}) do
-    Logger.log(:error, reason)
+    Logger.log(:error, "Nadia model error: #{inspect reason}")
 
     -1
   end

@@ -6,6 +6,11 @@ defmodule App.Commands do
 
   # You can create commands in the format `/command` by
   # using the macro `command "command"`.
+  command "start" do
+    Logger.log(:info, "Command /start received")
+    send_message "Hello, " <> update.message.from.username
+  end
+
   command ["hello", "hi"] do
     # Logger module injected from App.Commander
     Logger.log(:info, "Command /hello or /hi")
