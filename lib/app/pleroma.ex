@@ -31,7 +31,8 @@ defmodule Pleroma do
     {:ok, response} = Tesla.post(base_instance <> "/api/v1/apps", query_params)
   end
 
-  # return uri for user to give us access token
+  # return uri for user to give us authorization code
+  # authorization can be used in get_access_token()
   def auth_request_url(scopes) do
 
     client_id = Application.get_env(:app, :instance_client_id)
@@ -48,7 +49,7 @@ defmodule Pleroma do
     base_instance <> "/oauth/authorize?" <> URI.encode_query(query_params)
   end
 
-  def get_access_token() do
+  def get_access_token(code) do
     base_instance = Application.get_env(:app, :instance_url)
     client_id = Application.get_env(:app, :instance_client_id)
     client_secret = Application.get_env(:app, :instance_client_secret)
@@ -57,7 +58,8 @@ defmodule Pleroma do
       "client_id" => client_id,
       "client_secret" => client_secret,
       "redirect_uri" => "urn:ietf:wg:oauth:2.0:oob",
-      "grant_type" => "client_credentials"
+      "grant_type" => "authorization_code",
+      "code" => code
       }
 
     case Pleroma.post(base_instance <> "/oauth/token", query_params) do
@@ -71,14 +73,27 @@ defmodule Pleroma do
     client_id = Application.get_env(:app, :instance_client_id)
     client_secret = Application.get_env(:app, :instance_client_secret)
 
-    query_params = [
-      Authorization: "Bearer " <> access_token
-    ]
+    headers = [{"Authorization", "Bearer " <> access_token}]
 
     case Pleroma.get(base_instance <> "/api/v1/apps/verify_credentials", data: "",
-          headers: [{"Authorization", "Bearer " <> access_token}]) do
+          headers: headers) do
       {:ok, response} -> {:ok, Poison.decode!(response.body)}
       {:error, reason} -> {:error, reason}
     end
   end
+
+  def status_post(access_token, status, in_reply_to_id \\ nil, media_ids \\ nil, sensitive \\ false, visibility \\ nil) do
+
+    base_instance = Application.get_env(:app, :instance_url)
+
+    query_params = %{
+      status: status
+    }
+
+    headers = [{"Authorization", "Bearer " <> access_token}]
+
+    Pleroma.post(base_instance <> "/api/v1/statuses", query_params, headers: headers)
+    # Pleroma.post("https://httpbin.org/post", query_params, headers: headers)
+  end
+
 end
