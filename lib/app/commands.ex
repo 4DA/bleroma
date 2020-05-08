@@ -15,10 +15,11 @@ defmodule App.Commands do
     oauth_link = "https://birdity.club/oauth/authorize?client_id=FpWYvIh-founF77h7u06vN_bAyYDJVzARznVO-ZjKpc&response_type=code&redirect_uri=urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob&scope=read+write+follow"
 
     send_message(
-      "To log in go to this link and call me with /identify <token>"
-      <> oauth_link <> "\n"
-      <> "/identify <token> :: login as user using oauth token\n"
-      <> "/logout :: logout")
+      "Visit [this link](#{oauth_link}) authenticate, get code and send me as /identify <code>\n",
+      [{:parse_mode, "markdown"}])
+    # <> "/identify <token> :: login as user using oauth token\n"
+    # <> "/logout :: logout",
+
 
   end
 
