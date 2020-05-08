@@ -11,6 +11,17 @@ defmodule App.Commands do
     send_message "Hello, " <> update.message.from.username
   end
 
+  command ["help"] do
+    oauth_link = "https://birdity.club/oauth/authorize?client_id=FpWYvIh-founF77h7u06vN_bAyYDJVzARznVO-ZjKpc&response_type=code&redirect_uri=urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob&scope=read+write+follow"
+
+    send_message(
+      "To log in go to this link and call me with /identify <token>"
+      <> oauth_link <> "\n"
+      <> "/identify <token> :: login as user using oauth token\n"
+      <> "/logout :: logout")
+
+  end
+
   command ["hello", "hi"] do
     # Logger module injected from App.Commander
     Logger.log(:info, "Command /hello or /hi")
