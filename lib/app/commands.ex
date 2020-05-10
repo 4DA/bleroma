@@ -17,7 +17,7 @@ defmodule App.Commands do
     oauth_link = "https://birdity.club/oauth/authorize?client_id=FpWYvIh-founF77h7u06vN_bAyYDJVzARznVO-ZjKpc&response_type=code&redirect_uri=urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob&scope=read+write+follow"
 
     send_message(
-      "Visit [this link](#{oauth_link}) authenticate, and send me the code\n",
+      "Visit [this link](#{oauth_link}) authenticate, and send me the code via /identify\n",
       [{:parse_mode, "markdown"}])
     # <> "/identify <token> :: login as user using oauth token\n"
     # <> "/logout :: logout",
@@ -204,8 +204,6 @@ defmodule App.Commands do
   # The `message` macro must come at the end since it matches anything.
   # You may use it as a fallback.
   message do
-    Logger.log(:warn, "Did not match the message")
-
-    send_message("Sorry, I couldn't understand you")
+    send_message("Plese authenticate first")
   end
 end

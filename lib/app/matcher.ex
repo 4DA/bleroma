@@ -4,8 +4,12 @@ defmodule App.Matcher do
   use GenServer
 
   alias App.Commands
+  alias App.CommandsLI
   require Logger
+
   import Storage
+  import Bleroma.Utils
+  alias Bleroma.Utils
 
   # Server
   # ----------------------------------------------------------------------------
@@ -27,17 +31,24 @@ defmodule App.Matcher do
   def init(:ok) do
     app = Hunter.Application.load_credentials("bleroma")
     Logger.log(:info, "Loaded application #{inspect(app)}")
-    {:ok, %{app: app, conn: nil, storage: Storage.init(), conns: %{}}}
+    {:ok, %{app: app, storage: Storage.init(), conns: %{}}}
   end
-
 
   @impl true
   def handle_cast(message, state) do
+    tg_user_id = message.message.from.id
+    conn = Utils.get_connection(tg_user_id, state)
 
-    if (Map.get(state.conns, message.from.id) != nil) do
+    # user is not authenticated
+    if conn == nil do
       Commands.match_message(message, state)
     else
-      Commands.match_message(message, state)
+      # first symbol is "/", try to parse as command
+      if(String.at(message.message.text, 0) === "/") do
+        CommandsLI.match_message(message, state)
+      else
+        Utils.make_post(tg_user_id, state, conn, message)
+      end
     end
 
     {:noreply, state}
