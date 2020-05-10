@@ -10,7 +10,7 @@ defmodule Bleroma.Utils do
       account = Hunter.verify_credentials(conn)
       Storage.store_auth(state.storage, user_id, conn.bearer_token)
       Map.put(state.conns, user_id, conn)
-      Logger.log(:info, "Auth OK for user id=#{user_id} name=#{username} conn=#{inspect(conn)}")
+      Logger.log(:info, "Auth OK for tg_user_id=#{user_id} name=#{username} conn=#{inspect(conn)}")
       {:ok, conn, account}
     rescue
       err in Hunter.Error -> {:error, "#{inspect(err)}"}
@@ -23,8 +23,6 @@ defmodule Bleroma.Utils do
     # try to get conn from memory
     conn_mem = Map.get(state.conns, user_id)
 
-    conn_err = nil
-
     if conn_mem == nil do
       # try to load user connection to instance from storage
       bearer = case Storage.get_auth(state.storage, user_id) do
@@ -32,22 +30,24 @@ defmodule Bleroma.Utils do
                {:error} -> nil
                end
 
-      Logger.log(:info, "Bearer: #{inspect(bearer)}")
-
-      # make a new connection
-      conn_new = nil
       try do
-        Hunter.new([base_url: base_instance, bearer_token: bearer])
+        nc = Hunter.new([base_url: base_instance, bearer_token: bearer])
+        account = Hunter.verify_credentials(nc)
+        state = put_in(state[:conns][user_id], nc)
+        {nc, state}
       rescue
-        err in Hunter.Error -> nil
+        err in Hunter.Error ->
+          Logger.log(:error, "verify_creds error for tg_user_id=#{user_id}: #{inspect(err)}"); {nil, state}
       end
     else
-      conn_mem
+      {conn_mem, state}
     end
   end
 
   def make_post(user_id, state, conn, message) do
-    Nadia.send_message(user_id, "yay", [{:parse_mode, "markdown"}])
+    status = Hunter.create_status(conn, message.message.text, [visibility: "private"])
+    Logger.log(:info, "new status: #{inspect(status)}")
+    Nadia.send_message(user_id, "Status posted: #{status.url}")
   end
 
 end

@@ -35,19 +35,19 @@ defmodule App.Matcher do
   end
 
   @impl true
-  def handle_cast(message, state) do
-    tg_user_id = message.message.from.id
-    conn = Utils.get_connection(tg_user_id, state)
+  def handle_cast(update, state) do
+    tg_user_id = update.message.from.id
+    {conn, state} = Utils.get_connection(update.message.from.id, state)
 
     # user is not authenticated
     if conn == nil do
-      Commands.match_message(message, state)
+      Commands.match_message(update, state)
     else
       # first symbol is "/", try to parse as command
-      if(String.at(message.message.text, 0) === "/") do
-        CommandsLI.match_message(message, state)
+      if(String.at(update.message.text, 0) === "/") do
+        CommandsLI.match_message(update, state)
       else
-        Utils.make_post(tg_user_id, state, conn, message)
+        Utils.make_post(tg_user_id, state, conn, update)
       end
     end
 

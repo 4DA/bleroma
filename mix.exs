@@ -21,7 +21,7 @@ defmodule App.Mixfile do
     [
       {:nadia, "~> 0.6.0"},
       {:tesla, "~> 1.3.0"},
-      {:poison, "~> 3.0"}
+      {:poison, "~> 4.0"},
     ]
 
   end
