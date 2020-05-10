@@ -1,6 +1,7 @@
 defmodule App.Commands do
   use App.Router
   use App.Commander
+  require Hunter
 
   alias App.Commands.Outside
 
@@ -15,11 +16,41 @@ defmodule App.Commands do
     oauth_link = "https://birdity.club/oauth/authorize?client_id=FpWYvIh-founF77h7u06vN_bAyYDJVzARznVO-ZjKpc&response_type=code&redirect_uri=urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob&scope=read+write+follow"
 
     send_message(
-      "Visit [this link](#{oauth_link}) authenticate, get code and send me as /identify <code>\n",
+      "Visit [this link](#{oauth_link}) authenticate, and send me the code\n",
       [{:parse_mode, "markdown"}])
     # <> "/identify <token> :: login as user using oauth token\n"
     # <> "/logout :: logout",
+  end
 
+  command ["identify"] do
+    [_command | args] = String.split(update.message.text, " ")
+
+    # send_message("Your arguments were: " <> Enum.join(args, " "))
+
+    token = Enum.at(args, 0)
+    user_id = update.message.from.id
+    username = update.message.from.username
+
+    # send_message("User id: " <> user_id <> " token: " <> token)
+    Logger.log(:info, "/identify from [id=#{user_id} name=#{username} oauth=#{token}]")
+
+    # verify creds
+    base_instance = Application.get_env(:app, :instance_url)
+
+    conn = nil
+    try do
+      conn = Hunter.log_in_oauth(state.app, token, base_instance)
+      Hunter.verify_credentials(conn)
+      Storage.store_auth(state.storage, user_id, conn.bearer_token)
+      Map.put(state.conns, user_id, conn)
+      Logger.log(:info, "Auth OK for user id=#{user_id} name=#{username} bearer=#{inspect(conn)}")
+    rescue
+      err in Hunter.Error ->
+        Logger.log(:info, "Auth error for user id=#{user_id} name=#{username} err=#{inspect(err)}")
+    end
+
+    Logger.log(:info, "Conn: #{inspect(conn)}")
+    Logger.log(:info, "CredOK: #{inspect(CredOK)}")
 
   end
 
@@ -87,6 +118,15 @@ defmodule App.Commands do
         answer_callback_query(text: "I can't agree more.")
     end
   end
+
+  # callback_query_command "identify" do
+  #   token = case update.callback_query.data do
+  #              "/identify " <> token -> token
+  #            end
+  #   user_id = update.callback_query.from.id
+  #   send_message("User id: " <> user_id <> " token: " <> token)
+  # end
+
 
   # You may also want make commands when in inline mode.
   # Be sure to enable inline mode first: https://core.telegram.org/bots/inline

@@ -8,9 +8,9 @@ defmodule App.Router do
       require Logger
       import App.Router
 
-      def match_message(message) do
+      def match_message(message, state) do
         try do
-          apply(__MODULE__, :do_match_message, [message])
+          apply(__MODULE__, :do_match_message, [message, state])
         rescue
           err in FunctionClauseError ->
             Logger.log(:warn, """
@@ -24,8 +24,8 @@ defmodule App.Router do
 
   def generate_message_matcher(handler) do
     quote do
-      def do_match_message(var!(update)) do
-        handle_message(unquote(handler), [var!(update)])
+      def do_match_message(var!(update), var!(state)) do
+        handle_message(unquote(handler), [var!(update)], var!(state))
       end
     end
   end
@@ -37,9 +37,9 @@ defmodule App.Router do
               message: %{
                 text: "/" <> unquote(command)
               }
-            } = var!(update)
+            } = var!(update), var!(state)
           ) do
-        handle_message(unquote(handler), [var!(update)])
+        handle_message(unquote(handler), [var!(update)], var!(state))
       end
 
       def do_match_message(
@@ -47,9 +47,9 @@ defmodule App.Router do
               message: %{
                 text: "/" <> unquote(command) <> " " <> _
               }
-            } = var!(update)
+            } = var!(update), var!(state)
           ) do
-        handle_message(unquote(handler), [var!(update)])
+        handle_message(unquote(handler), [var!(update)], var!(state))
       end
 
       def do_match_message(
@@ -57,9 +57,9 @@ defmodule App.Router do
               message: %{
                 text: "/" <> unquote(command) <> "@" <> unquote(@bot_name)
               }
-            } = var!(update)
+            } = var!(update), var!(state)
           ) do
-        handle_message(unquote(handler), [var!(update)])
+        handle_message(unquote(handler), [var!(update)], var!(state))
       end
 
       def do_match_message(
@@ -67,18 +67,18 @@ defmodule App.Router do
               message: %{
                 text: "/" <> unquote(command) <> "@" <> unquote(@bot_name) <> " " <> _
               }
-            } = var!(update)
+            } = var!(update), var!(state)
           ) do
-        handle_message(unquote(handler), [var!(update)])
+        handle_message(unquote(handler), [var!(update)], var!(state))
       end
     end
   end
 
   def generate_inline_query_matcher(handler) do
     quote do
-      def do_match_message(%{inline_query: inline_query} = var!(update))
+      def do_match_message(%{inline_query: inline_query} = var!(update), var!(state))
           when not is_nil(inline_query) do
-        handle_message(unquote(handler), [var!(update)])
+        handle_message(unquote(handler), [var!(update)], var!(state))
       end
     end
   end
@@ -88,26 +88,26 @@ defmodule App.Router do
       def do_match_message(
             %{
               inline_query: %{query: "/" <> unquote(command)}
-            } = var!(update)
+            } = var!(update), var!(state)
           ) do
-        handle_message(unquote(handler), [var!(update)])
+        handle_message(unquote(handler), [var!(update)], var!(state))
       end
 
       def do_match_message(
             %{
               inline_query: %{query: "/" <> unquote(command) <> " " <> _}
-            } = var!(update)
+            } = var!(update), var!(state)
           ) do
-        handle_message(unquote(handler), [var!(update)])
+        handle_message(unquote(handler), [var!(update)], var!(state))
       end
     end
   end
 
   def generate_callback_query_matcher(handler) do
     quote do
-      def do_match_message(%{callback_query: callback_query} = var!(update))
+      def do_match_message(%{callback_query: callback_query} = var!(update), var!(state))
           when not is_nil(callback_query) do
-        handle_message(unquote(handler), [var!(update)])
+        handle_message(unquote(handler), [var!(update)], var!(state))
       end
     end
   end
@@ -117,17 +117,17 @@ defmodule App.Router do
       def do_match_message(
             %{
               callback_query: %{data: "/" <> unquote(command)}
-            } = var!(update)
+            } = var!(update), var!(state)
           ) do
-        handle_message(unquote(handler), [var!(update)])
+        handle_message(unquote(handler), [var!(update)], var!(state))
       end
 
       def do_match_message(
             %{
               callback_query: %{data: "/" <> unquote(command) <> " " <> _}
-            } = var!(update)
+            } = var!(update), var!(state)
           ) do
-        handle_message(unquote(handler), [var!(update)])
+        handle_message(unquote(handler), [var!(update)], var!(state))
       end
     end
   end
@@ -234,26 +234,26 @@ defmodule App.Router do
 
   # Helpers
 
-  def handle_message({module, function}, update)
+  def handle_message({module, function}, update, state)
       when is_atom(function) and is_list(update) do
     Task.start(fn ->
-      apply(module, function, [hd(update)])
+      apply(module, function, [hd(update), state])
     end)
   end
 
-  def handle_message({module, function}, update)
+  def handle_message({module, function}, update, state)
       when is_atom(function) do
     Task.start(fn ->
-      apply(module, function, [update])
+      apply(module, function, [update, state])
     end)
   end
 
-  def handle_message(function, update)
+  def handle_message(function, update, state)
       when is_function(function) do
     Task.start(fn ->
       function.()
     end)
   end
 
-  def handle_message(_, _), do: nil
+  def handle_message(_, _, _), do: nil
 end

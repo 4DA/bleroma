@@ -1,3 +1,5 @@
+# Poller receives responses from Telegram and sends them to App.Matcher
+
 defmodule App.Poller do
   use GenServer
   require Logger
