@@ -2,6 +2,7 @@ defmodule App.Commands do
   use App.Router
   use App.Commander
   require Hunter
+  require Bleroma.Utils
 
   alias App.Commands.Outside
 
@@ -37,21 +38,11 @@ defmodule App.Commands do
     # verify creds
     base_instance = Application.get_env(:app, :instance_url)
 
-    conn = nil
-    try do
-      conn = Hunter.log_in_oauth(state.app, token, base_instance)
-      Hunter.verify_credentials(conn)
-      Storage.store_auth(state.storage, user_id, conn.bearer_token)
-      Map.put(state.conns, user_id, conn)
-      Logger.log(:info, "Auth OK for user id=#{user_id} name=#{username} bearer=#{inspect(conn)}")
-    rescue
-      err in Hunter.Error ->
-        Logger.log(:info, "Auth error for user id=#{user_id} name=#{username} err=#{inspect(err)}")
+    conn = Bleroma.Utils.login_user(user_id, username, token, state)
+    case conn do
+      {:ok, _, account} -> send_message("You have been authenticated as #{account.acct}")
+      {:error, reason} -> send_message("Authentication error")
     end
-
-    Logger.log(:info, "Conn: #{inspect(conn)}")
-    Logger.log(:info, "CredOK: #{inspect(CredOK)}")
-
   end
 
   command ["hello", "hi"] do
