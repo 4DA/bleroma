@@ -131,11 +131,42 @@ defmodule Bleroma.Utils do
     conn = Map.get(state.conns, tg_user_id)
     try do
       st = Hunter.status(conn, status_id)
-      Nadia.send_message(tg_user_id, ""
-        <> "@#{st.account.acct}\n"        
-        <> "#{st.content}\n"
-        <> "/#{status_id} 🗘#{st.reblogs_count} ☆#{st.favourites_count}")
-      {:ok}
+
+      string_to_send = ""
+      <> "@#{st.account.acct}\n"
+      <> "#{st.content}\n"
+      <> "/#{status_id} 🗘#{st.reblogs_count} ☆#{st.favourites_count}"
+
+    reply_markup =  %Nadia.Model.InlineKeyboardMarkup{
+          inline_keyboard: [
+            [
+              %{
+                text: "Open",
+                url: "#{st.url}"
+              }
+            ],
+          ]
+        }
+
+      opts = [reply_markup: reply_markup]
+
+      opts_parse_mode = opts ++
+      if (st.content =~ "<a" or st.content =~ "<b>" or st.content =~ "<i>" or
+        st.content =~ "<u>" or st.content =~ "<code>" or st.content =~ "<pre>") do
+        [{:parse_mode, "HTML"}]
+      else
+        []
+      end
+
+      # telegram supports very little subset of html tags:
+      # https://core.telegram.org/bots/api#formatting-options
+      # if send is failed, send message with plain parse mode
+
+      case Nadia.send_message(tg_user_id, string_to_send, opts_parse_mode) do
+        {:error, _} -> Nadia.send_message(tg_user_id, string_to_send, opts)
+        {:ok, _} ->  {:ok}
+      end
+
     rescue err in Hunter.Error -> Logger.log(:error, "Error fetching status #{inspect(err)}");
                                   {:error, err}    
     end
