@@ -120,9 +120,11 @@ defmodule App.CommandsLI do
 
   # Message without commands, time for a new status
   message do
-    {conn, state} = Utils.get_conn(update, state)
-    Utils.make_post(update.message.from.id, state, conn, update)
-    # send_message("Unknown command")
+    if String.match?(update.message.text, ~r/^\/[a-zA-Z0-9]+$/) do
+      Utils.show_post(Enum.at(String.split(update.message.text, "/"), 1), update.message.from.id, state)
+    else
+      Utils.make_post(update, state)
+    end
   end
 
 end
