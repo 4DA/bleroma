@@ -44,10 +44,64 @@ defmodule Bleroma.Utils do
     end
   end
 
+  def get_conn(%{
+        message: %{
+          from: user}
+               },
+    state) do
+    get_connection(user.id, state)
+  end
+
+  def get_conn(%{
+        inline_query: %{
+          from: user}
+               },
+    state) do
+    get_connection(user.id, state)
+  end
+
+  def get_conn(%{
+        callback_query: %{
+          from: user}
+               },
+    state) do
+    get_connection(user.id, state)
+  end
+  
+
   def make_post(user_id, state, conn, message) do
+
+
     status = Hunter.create_status(conn, message.message.text, [visibility: "private"])
     Logger.log(:info, "new status: #{inspect(status)}")
-    Nadia.send_message(user_id, "Status posted: #{status.url}")
+
+    reply_markup =  %Nadia.Model.InlineKeyboardMarkup{
+          inline_keyboard: [
+            [
+              %{
+                callback_data: "/show #{status.url}",
+                text: "Open"
+              },
+              %{
+                callback_data: "/del #{status.url}",
+                text: "Delete"
+              }
+            ],
+
+
+          ]
+        }
+
+    params = [visibility: "private", reply_markup: reply_markup]
+
+    Nadia.send_message(user_id, "Status posted: #{status.url}",
+       [visibility: "private", reply_markup: reply_markup])
+
+    # Nadia.send_message(user_id,
+    #   "Will be posted: `#{message.message.text}` | params: `#{inspect(params)}`",
+    #   reply_markup: reply_markup
+    # )   
+
   end
 
 end
