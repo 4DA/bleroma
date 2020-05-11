@@ -22,12 +22,35 @@ defmodule App.CommandsLI do
     # end
   end
 
+  command ["del"] do
+    conn = Map.get(state.conns, update.message.from.id)
+    [_command | id] = String.split(update.message.text, " ")
+    res = Hunter.destroy_status(conn, id)
+    Logger.log(:init, "Deleted: #{id}")
+    send_message("Deleted: #{id}")
+  end
+
+  callback_query_command "del" do
+    conn = Map.get(state.conns, update.callback_query.from.id)
+    [_command | id] = String.split(update.callback_query.data, " ")
+
+    res = try do
+      Hunter.destroy_status(conn, id)
+      answer_callback_query(text: "Done")
+    rescue
+      err in Hunter.Error -> {:error, "#{inspect(err)}"};
+                              Logger.log(:error, "Delete error: #{inspect(err)}");
+                              answer_callback_query(text: "Error")
+    end
+  end
 
   command ["help"] do
     oauth_link = "https://birdity.club/oauth/authorize?client_id=FpWYvIh-founF77h7u06vN_bAyYDJVzARznVO-ZjKpc&response_type=code&redirect_uri=urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob&scope=read+write+follow"
 
     send_message(
       "/identify <token> :: log in using [oauth token](#{oauth_link});\n"
+      <> "/visibility :: get status visibility;"
+      <> "/visibility <value> :: set status visibility [public, unlisted, followers, direct];"
       <> "/logout :: log out;\n"
       <> "/help :: show this message;",
       [{:parse_mode, "markdown"}])

@@ -70,8 +70,6 @@ defmodule Bleroma.Utils do
   
 
   def make_post(user_id, state, conn, message) do
-
-
     status = Hunter.create_status(conn, message.message.text, [visibility: "private"])
     Logger.log(:info, "new status: #{inspect(status)}")
 
@@ -79,16 +77,14 @@ defmodule Bleroma.Utils do
           inline_keyboard: [
             [
               %{
-                callback_data: "/show #{status.url}",
-                text: "Open"
+                text: "Open",
+                url: "#{status.url}"
               },
               %{
-                callback_data: "/del #{status.url}",
+                callback_data: "/del #{status.id}",
                 text: "Delete"
               }
             ],
-
-
           ]
         }
 
