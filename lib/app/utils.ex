@@ -71,33 +71,39 @@ defmodule Bleroma.Utils do
   bleroma_bot_id = Application.get_env(:app, :bot_name)
 
   def make_post(
-    %Nadia.Model.Update{message: %{reply_to_message: %{from: %{username: bleroma_bot_id}} = rmsg}},
+    %Nadia.Model.Update{message: %{reply_to_message: %{from: %{username: bleroma_bot_id}} = rmsg}} = update,
     state
   ) do
 
-    Logger.log(:info, "catched reply to msg #{inspect(rmsg)}")
-    # status = Hunter.create_status(conn, message.message.text, [visibility: "private", in_reply_to_id: id])
-    # Logger.log(:info, "new reply: #{inspect(status)}")
+    {conn, state} = get_conn(update, state)
 
-    # reply_markup =  %Nadia.Model.InlineKeyboardMarkup{
-    #       inline_keyboard: [
-    #         [
-    #           %{
-    #             text: "Open",
-    #             url: "#{status.url}"
-    #           },
-    #           %{
-    #             callback_data: "/del #{status.id}",
-    #             text: "Delete"
-    #           }
-    #         ],
-    #       ]
-    #     }
+    caps = Regex.scan(~r/\/([a-zA-Z0-9]+)/, rmsg.text)
 
-    # params = [visibility: "private", reply_markup: reply_markup]
+    reply_status_id = List.last(List.last(caps))
 
-    # Nadia.send_message(user_id, "Reply posted: #{status.url}",
-    #    [visibility: "private", reply_markup: reply_markup])
+    Logger.log(:info, "catched reply to msg #{inspect(rmsg)} stat id: #{reply_status_id}")
+
+    status = Hunter.create_status(conn, update.message.text,
+      [visibility: "private", in_reply_to_id: reply_status_id])
+
+    reply_markup =  %Nadia.Model.InlineKeyboardMarkup{
+          inline_keyboard: [
+            [
+              %{
+                text: "Open",
+                url: "#{status.url}"
+              },
+              %{
+                callback_data: "/del #{status.id}",
+                text: "Delete"
+              }
+            ],
+          ]
+        }
+
+    Nadia.send_message(update.message.from.id, "Reply posted: #{status.url}",
+       [reply_markup: reply_markup])
+
   end
   def make_post(update, state) do
     {conn, state} = get_conn(update, state)
@@ -124,7 +130,7 @@ defmodule Bleroma.Utils do
     params = [visibility: "private", reply_markup: reply_markup]
 
     Nadia.send_message(user_id, "Status posted: /#{status.id}",
-       [visibility: "private", reply_markup: reply_markup])
+       [reply_markup: reply_markup])
   end
 
   def show_post(status_id, tg_user_id, state) do
@@ -168,7 +174,8 @@ defmodule Bleroma.Utils do
       end
 
     rescue err in Hunter.Error -> Logger.log(:error, "Error fetching status #{inspect(err)}");
-                                  {:error, err}    
+        Nadia.send_message(tg_user_id, "Status not found");
+        {:error, err}    
     end
   end
   
