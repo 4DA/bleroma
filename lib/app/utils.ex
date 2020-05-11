@@ -79,32 +79,37 @@ defmodule Bleroma.Utils do
 
     caps = Regex.scan(~r/\/([a-zA-Z0-9]+)/, rmsg.text)
 
-    reply_status_id = List.last(List.last(caps))
+    if Enum.empty?(caps) do
+      Nadia.send_message(
+        update.message.from.id, "Please reply only to bot messages with id links i.e /abcdef123")
+    else
+      reply_status_id = List.last(List.last(caps))
 
-    Logger.log(:info, "catched reply to msg #{inspect(rmsg)} stat id: #{reply_status_id}")
+      Logger.log(:info, "catched reply to msg #{inspect(rmsg)} stat id: #{reply_status_id}")
 
-    status = Hunter.create_status(conn, update.message.text,
-      [visibility: "private", in_reply_to_id: reply_status_id])
+      status = Hunter.create_status(conn, update.message.text,
+        [visibility: "private", in_reply_to_id: reply_status_id])
 
-    reply_markup =  %Nadia.Model.InlineKeyboardMarkup{
-          inline_keyboard: [
-            [
-              %{
-                text: "Open",
-                url: "#{status.url}"
-              },
-              %{
-                callback_data: "/del #{status.id}",
-                text: "Delete"
-              }
-            ],
-          ]
-        }
+      reply_markup =  %Nadia.Model.InlineKeyboardMarkup{
+        inline_keyboard: [
+          [
+            %{
+              text: "Open",
+              url: "#{status.url}"
+            },
+            %{
+              callback_data: "/del #{status.id}",
+              text: "Delete"
+            }
+          ],
+        ]
+      }
 
-    Nadia.send_message(update.message.from.id, "Reply posted: #{status.url}",
-       [reply_markup: reply_markup])
-
+      Nadia.send_message(update.message.from.id, "Reply posted: /#{status.id}",
+        [reply_markup: reply_markup])
+    end
   end
+
   def make_post(update, state) do
     {conn, state} = get_conn(update, state)
     user_id = update.message.from.id
