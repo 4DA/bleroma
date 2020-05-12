@@ -49,8 +49,8 @@ defmodule App.CommandsLI do
 
     send_message(
       "/identify <token> :: log in using [oauth token](#{oauth_link});\n"
-      <> "/visibility :: get status visibility;"
-      <> "/visibility <value> :: set status visibility [public, unlisted, followers, direct];"
+      <> "/visibility :: get status visibility;\n"
+      <> "/visibility <value> :: set status visibility [public, unlisted, followers, direct];\n"
       <> "/logout :: log out;\n"
       <> "/help :: show this message;",
       [{:parse_mode, "markdown"}])

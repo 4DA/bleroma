@@ -17,6 +17,19 @@ defmodule Bleroma.Utils do
     end
   end
 
+  def new_connection(user_id, bearer) do
+    base_instance = Application.get_env(:app, :instance_url)
+      try do
+        nc = Hunter.new([base_url: base_instance, bearer_token: bearer])
+        account = Hunter.verify_credentials(nc)
+        nc
+      rescue
+        err in Hunter.Error ->
+          Logger.log(:error, "verify_creds error for tg_user_id=#{user_id}: #{inspect(err)}");
+          nil
+      end
+  end
+
   def get_connection(user_id, state) do
     base_instance = Application.get_env(:app, :instance_url)
 

@@ -16,13 +16,16 @@ defmodule App do
     end
 
     import Supervisor.Spec, warn: false
+    Application.ensure_all_started(:websockex)
 
     children = [
       worker(App.Poller, []),
-      worker(App.Matcher, [])
+      worker(App.Matcher, []),
+      worker(App.WSManager, [])
     ]
 
     opts = [strategy: :one_for_one, name: App.Supervisor]
     Supervisor.start_link(children, opts)
+
   end
 end

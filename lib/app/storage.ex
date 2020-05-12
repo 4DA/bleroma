@@ -20,6 +20,14 @@ defmodule Storage do
 
   # end
 
+  def bearer_filter(tg_id, bearer) do
+    bearer
+  end
+
+  def get_all(table) do
+    :dets.match(table,  {:"$1", :"$2"})
+  end
+
   # defp key_stream(table_name) do
   #   Stream.resource(
   #     fn -> :ets.first(table_name) end,
