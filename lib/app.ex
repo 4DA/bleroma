@@ -29,11 +29,11 @@ defmodule App do
     opts = [strategy: :one_for_one, name: App.Supervisor]
     {:ok, sv_pid} = Supervisor.start_link(children, opts)
 
-    {_, poller_pid, _, _} = List.keyfind(Supervisor.which_children(sv_pid), App.Poller, 0)
+    {_, matcher_pid, _, _} = List.keyfind(Supervisor.which_children(sv_pid), App.Matcher, 0)
     Logger.log(:info, "sv: #{inspect(sv_pid)} | children: #{inspect(Supervisor.which_children(sv_pid))}")
     
     wsm = Supervisor.start_child(sv_pid, %{id: App.WSManager,
-                                           start: {App.WSManager, :start_link, [poller_pid]}
+                                           start: {App.WSManager, :start_link, [matcher_pid]}
                                           })
 
     Logger.log(:info, "wsm = #{inspect(wsm)}")

@@ -151,8 +151,8 @@ defmodule Bleroma.Utils do
        [reply_markup: reply_markup])
   end
 
-  def show_post(status_id, tg_user_id, state) do
-    conn = Map.get(state.conns, tg_user_id)
+  def show_post(status_id, tg_user_id, conn) do
+
     try do
       st = Hunter.status(conn, status_id)
 

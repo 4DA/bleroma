@@ -121,7 +121,8 @@ defmodule App.CommandsLI do
   # Message without commands, time for a new status
   message do
     if String.match?(update.message.text, ~r/^\/[a-zA-Z0-9]+$/) do
-      Utils.show_post(Enum.at(String.split(update.message.text, "/"), 1), update.message.from.id, state)
+      conn = Map.get(state.conns, update.message.from.id)
+      Utils.show_post(Enum.at(String.split(update.message.text, "/"), 1), update.message.from.id, conn)
     else
       Utils.make_post(update, state)
     end

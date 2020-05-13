@@ -5,11 +5,13 @@ defmodule App.Matcher do
 
   alias App.Commands
   alias App.CommandsLI
-  require Logger
-
   import Storage
   import Bleroma.Utils
   alias Bleroma.Utils
+
+  require Logger
+  require Map
+
 
   # Server
   # ----------------------------------------------------------------------------
@@ -43,6 +45,12 @@ defmodule App.Matcher do
   @impl true
   def handle_cast({:masto, tg_id, %{"event" => "notification"} = message, conn} = arg, state) do
     Logger.log(:info, "notification from maston: #{inspect(message)}")
+
+    payload = Map.get(message, "payload")
+    status = Map.get(Poison.decode!(payload), "status")
+    status_id = Map.get(status, "id")
+
+    show_post(status_id, tg_id, conn)
     {:noreply, state}
   end
 
