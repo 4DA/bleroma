@@ -34,6 +34,24 @@ defmodule App.Matcher do
     {:ok, %{app: app, storage: Storage.init(), conns: %{}}}
   end
 
+  # @impl true
+  # def handle_cast(:hello, state) do
+  #   Logger.log(:info, "hello")
+  #   {:noreply, state}
+  # end
+
+  @impl true
+  def handle_cast({:masto, tg_id, %{"event" => "notification"} = message, conn} = arg, state) do
+    Logger.log(:info, "notification from maston: #{inspect(message)}")
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_cast({:masto, tg_id, %{"event" => "update"} = message, conn} = arg, state) do
+    Logger.log(:info, "update from maston: #{inspect(message)}")
+    {:noreply, state}
+  end
+
   @impl true
   def handle_cast(update, state) do
     Logger.log(:info, "recv msg: #{inspect(update)}")

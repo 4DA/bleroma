@@ -1,13 +1,15 @@
 defmodule Bleroma.Websocks do
   use WebSockex
   require Logger
+  require App.Matcher
+  require Poison
 
-  def start_link([tg_id, conn]) do
+  def start_link({tg_id, conn, matcher} = state) do
     ws_url = Application.get_env(:app, :websocket_url)
     access_token = conn.bearer_token
 
     WebSockex.start_link("#{ws_url}?access_token=#{conn.bearer_token}&stream=user",
-      __MODULE__, :fake_state, ssl_options: [
+      __MODULE__, {tg_id, conn, matcher}, ssl_options: [
         ciphers: :ssl.cipher_suites() ++ [{:rsa, :aes_128_cbc, :sha}]
       ])
 
@@ -25,19 +27,26 @@ defmodule Bleroma.Websocks do
     {:ok, state}
   end
 
-  def handle_frame({:text, "Can you please reply yourself?" = msg}, :fake_state) do
-    Logger.info("Received Message: #{msg}")
-    msg = "Sure can!"
-    Logger.info("Sending message: #{msg}")
-    {:reply, {:text, msg}, :fake_state}
-  end
-  def handle_frame({:text, "Close the things!" = msg}, :fake_state) do
-    Logger.info("Received Message: #{msg}")
-    {:close, :fake_state}
-  end
-  def handle_frame({:text, msg}, :fake_state) do
-    Logger.info("Received Message: #{msg}")
-    {:ok, :fake_state}
+  # def handle_frame({:text, "Can you please reply yourself?" = msg}, state) do
+  #   Logger.info("Received Message: #{msg}")
+  #   msg = "Sure can!"
+  #   Logger.info("Sending message: #{msg}")
+  #   {:reply, {:text, msg}, state}
+  # end
+  # def handle_frame({:text, "Close the things!" = msg}, state) do
+  #   Logger.info("Received Message: #{msg}")
+  #   {:close, state}
+  # end
+
+  def handle_frame({:text, msg}, {tg_id, conn, matcher} = state) do
+    try do
+      if (String.length(msg) > 0) do
+        App.Matcher.match({:masto, tg_id, Poison.decode!(msg), conn})
+      end
+    rescue err in Poison.Parse.Error -> Logger.error("Error decoding message from masto: #{msg}")
+    end
+
+    {:ok, state}
   end
 
   def handle_disconnect(%{reason: {:local, reason}}, state) do

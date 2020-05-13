@@ -14,20 +14,20 @@ defmodule App.WSManager do
   # Server
   # ----------------------------------------------------------------------------
 
-  def start_link(poller) do
-    GenServer.start_link(__MODULE__, poller, name: __MODULE__)
+  def start_link(matcher) do
+    GenServer.start_link(__MODULE__, matcher, name: __MODULE__)
   end
 
   @impl true
-  def init(poller) do
-    Logger.log(:info, "Started WSM | poller pid = #{inspect(poller)}")
+  def init(matcher) do
+    Logger.log(:info, "Started WSM | matcher pid = #{inspect(matcher)}")
     app = Hunter.Application.load_credentials("bleroma")
     Logger.log(:info, "Loaded application #{inspect(app)}")
 
     storage = Storage.init()
     all_bearers = Storage.get_all(storage)
     websocks = Enum.map(all_bearers, fn [tg, bearer] ->
-      Bleroma.Websocks.start_link([tg, Utils.new_connection(tg, bearer)])
+      Bleroma.Websocks.start_link({tg, Utils.new_connection(tg, bearer), matcher})
     end)
 
     {:ok, %{app: app, storage: storage, websocks: websocks}}
