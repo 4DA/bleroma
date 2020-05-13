@@ -14,12 +14,13 @@ defmodule App.WSManager do
   # Server
   # ----------------------------------------------------------------------------
 
-  def start_link do
-    GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
+  def start_link(poller) do
+    GenServer.start_link(__MODULE__, poller, name: __MODULE__)
   end
 
   @impl true
-  def init(:ok) do
+  def init(poller) do
+    Logger.log(:info, "Started WSM | poller pid = #{inspect(poller)}")
     app = Hunter.Application.load_credentials("bleroma")
     Logger.log(:info, "Loaded application #{inspect(app)}")
 
