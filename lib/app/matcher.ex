@@ -50,7 +50,7 @@ defmodule App.Matcher do
     status = Map.get(Poison.decode!(payload), "status")
     status_id = Map.get(status, "id")
 
-    show_post(status_id, tg_id, conn)
+    show_post_direct(status, tg_id, conn)
     {:noreply, state}
   end
 

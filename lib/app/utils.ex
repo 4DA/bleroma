@@ -151,6 +151,51 @@ defmodule Bleroma.Utils do
        [reply_markup: reply_markup])
   end
 
+  def show_post_direct(st, tg_user_id, conn) do
+    status_id = Map.get(st, "id")
+    acct = get_in(st, ["account", "acct"])
+    content_plain = get_in(st, ["pleroma", "content", "text/plain"])
+    reblogs_count = get_in(st, ["reblogs_count"])
+    favourites_count = get_in(st, ["favourites_count"])
+
+    string_to_send = ""
+    <> "@#{acct}\n"
+    <> "#{content_plain}\n"
+    <> "/#{status_id} 🗘#{reblogs_count} ☆#{favourites_count}"
+
+    Logger.log(:error, "")
+
+    reply_markup =  %Nadia.Model.InlineKeyboardMarkup{
+      inline_keyboard: [
+        [
+          %{
+            text: "Open",
+            url: "#{get_in(st, ["url"])}"
+          }
+        ],
+      ]
+    }
+
+    opts = [reply_markup: reply_markup]
+
+    # opts_parse_mode = opts ++
+    # if (st.content =~ "<a" or st.content =~ "<b>" or st.content =~ "<i>" or
+    #   st.content =~ "<u>" or st.content =~ "<code>" or st.content =~ "<pre>") do
+    #   [{:parse_mode, "HTML"}]
+    # else
+    #   []
+    # end
+
+    # telegram supports very little subset of html tags:
+    # https://core.telegram.org/bots/api#formatting-options
+    # if send is failed, send message with plain parse mode
+
+    case Nadia.send_message(tg_user_id, string_to_send, opts) do
+      {:error, _} -> Nadia.send_message(tg_user_id, string_to_send, opts)
+      {:ok, _} ->  {:ok}
+    end
+  end
+
   def show_post(status_id, tg_user_id, conn) do
 
     try do
