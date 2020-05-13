@@ -2,14 +2,16 @@ defmodule Bleroma.Websocks do
   use WebSockex
   require Logger
 
-  def start_link(conn) do
+  def start_link([tg_id, conn]) do
     ws_url = Application.get_env(:app, :websocket_url)
     access_token = conn.bearer_token
-    WebSockex.start_link("#{ws_url}?access_token=#{conn.bearer_token}&stream=user", __MODULE__, :fake_state,
-      ssl_options: [
+
+    WebSockex.start_link("#{ws_url}?access_token=#{conn.bearer_token}&stream=user",
+      __MODULE__, :fake_state, ssl_options: [
         ciphers: :ssl.cipher_suites() ++ [{:rsa, :aes_128_cbc, :sha}]
-      ]
-    )
+      ])
+
+    Logger.log(:info, "Started WS [tg_id: #{tg_id}, bearer: #{access_token}]")
   end
 
   @spec echo(pid, String.t) :: :ok

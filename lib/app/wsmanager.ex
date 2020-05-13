@@ -25,13 +25,11 @@ defmodule App.WSManager do
 
     storage = Storage.init()
     all_bearers = Storage.get_all(storage)
-    conns = Enum.map(all_bearers, fn [tg, bearer] -> Utils.new_connection(tg, bearer) end)
-    Logger.log(:info, "all conns = #{inspect(conns)}")
+    websocks = Enum.map(all_bearers, fn [tg, bearer] ->
+      Bleroma.Websocks.start_link([tg, Utils.new_connection(tg, bearer)])
+    end)
 
-    ws = Bleroma.Websocks.start_link(Enum.at(conns, 0))
-    Logger.log(:info, "ws = #{inspect(ws)}")
-
-    {:ok, %{app: app, storage: storage, conns: conns}}
+    {:ok, %{app: app, storage: storage, websocks: websocks}}
   end
 
   @impl true
