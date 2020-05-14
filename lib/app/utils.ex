@@ -158,9 +158,16 @@ defmodule Bleroma.Utils do
     reblogs_count = get_in(st, ["reblogs_count"])
     favourites_count = get_in(st, ["favourites_count"])
 
+    in_reply_to_id = Map.get(st, "in_reply_to_id", "")
+    in_reply_to_id = if String.length(in_reply_to_id) > 0 do
+      " -> /" <> in_reply_to_id
+    else
+      ""
+    end
+
     string_to_send = ""
-    <> "@#{acct}\n"
-    <> "#{content_plain}\n"
+    <> "@#{acct}" <> "#{in_reply_to_id}"
+    <> "\n#{content_plain}\n"
     <> "/#{status_id} 🗘#{reblogs_count} ☆#{favourites_count}"
 
     Logger.log(:error, "")
