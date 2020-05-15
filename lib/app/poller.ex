@@ -25,7 +25,8 @@ defmodule App.Poller do
   end
 
   def handle_info({:ssl_closed, _}, state) do
-    Logger.log(:error, "FIXME: ssl_closed")
+    Logger.log(:error, "FIXME: ssl_closed. issue: https://github.com/benoitc/hackney/issues/464")
+    update()
     {:noreply, state}
   end
 

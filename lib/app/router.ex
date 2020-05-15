@@ -13,7 +13,7 @@ defmodule App.Router do
           apply(__MODULE__, :do_match_message, [message, state])
         rescue
           err in FunctionClauseError ->
-            Logger.log(:warn, """
+            Logger.log(:error, """
             Errored when matching command. #{Poison.encode!(err)}
             Message was: #{Poison.encode!(message)}
             """)
