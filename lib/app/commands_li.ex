@@ -122,7 +122,17 @@ defmodule App.CommandsLI do
   message do
     if String.match?(update.message.text, ~r/^\/[a-zA-Z0-9]+$/) do
       conn = Map.get(state.conns, update.message.from.id)
-      Utils.show_post(Enum.at(String.split(update.message.text, "/"), 1), update.message.from.id, conn)
+      tg_user_id = update.message.from.id
+
+      try do
+        status_id = Enum.at(String.split(update.message.text, "/"), 1)
+        status = Hunter.status(conn, status_id)
+        Utils.show_post(status, tg_user_id, conn)
+      rescue err in Hunter.Error ->
+          Logger.log(:error, "Error fetching status #{inspect(err)}");
+          Nadia.send_message(tg_user_id, "Status not found")
+      end
+
     else
       Utils.make_post(update, state)
     end

@@ -2,6 +2,9 @@ defmodule Bleroma.Utils do
   require Logger
   require Nadia
   require Bleroma.Scrubber.Tg
+
+  require Hunter
+  alias Hunter.{Api.Request, Config}
   
   def login_user(user_id, username, token, state) do
     base_instance = Application.get_env(:app, :instance_url)
@@ -152,62 +155,40 @@ defmodule Bleroma.Utils do
        [reply_markup: reply_markup])
   end
 
-  def show_post_direct(st, tg_user_id, conn) do
-    status_id = Map.get(st, "id")
-    acct = get_in(st, ["account", "acct"])
-    content_plain = get_in(st, ["pleroma", "content", "text/plain"])
-    reblogs_count = get_in(st, ["reblogs_count"])
-    favourites_count = get_in(st, ["favourites_count"])
-
-    in_reply_to_id = Map.get(st, "in_reply_to_id", "")
-    in_reply_to_id = if String.length(in_reply_to_id) > 0 do
-      " -> /" <> in_reply_to_id
-    else
-      ""
-    end
-
-    string_to_send = ""
-    <> "@#{acct}" <> "#{in_reply_to_id}"
-    <> "\n#{content_plain}\n"
-    <> "/#{status_id} 🗘#{reblogs_count} ☆#{favourites_count}"
-
-    Logger.log(:error, "")
-
-    reply_markup =  %Nadia.Model.InlineKeyboardMarkup{
-      inline_keyboard: [
-        [
-          %{
-            text: "Open",
-            url: "#{get_in(st, ["url"])}"
-          }
-        ],
-      ]
+  defp status_nested_struct do
+    %Hunter.Status{
+      account: %Hunter.Account{},
+      reblog: %Hunter.Status{},
+      media_attachments: [%Hunter.Attachment{}],
+      mentions: [%Hunter.Mention{}],
+      tags: [%Hunter.Tag{}],
+      application: %Hunter.Application{}
     }
-
-    opts = [reply_markup: reply_markup]
-
-    # opts_parse_mode = opts ++
-    # if (st.content =~ "<a" or st.content =~ "<b>" or st.content =~ "<i>" or
-    #   st.content =~ "<u>" or st.content =~ "<code>" or st.content =~ "<pre>") do
-    #   [{:parse_mode, "HTML"}]
-    # else
-    #   []
-    # end
-
-    # telegram supports very little subset of html tags:
-    # https://core.telegram.org/bots/api#formatting-options
-    # if send is failed, send message with plain parse mode
-
-    case Nadia.send_message(tg_user_id, string_to_send, opts) do
-      {:error, _} -> Nadia.send_message(tg_user_id, string_to_send, opts)
-      {:ok, _} ->  {:ok}
-    end
   end
 
-  def show_post(status_id, tg_user_id, conn) do
+  defp notification_nested_struct do
+    %Hunter.Notification{
+      account: %Hunter.Account{},
+      status: %Hunter.Status{
+        account: %Hunter.Account{},
+        reblog: %Hunter.Status{},
+        media_attachments: [%Hunter.Attachment{}],
+        mentions: [%Hunter.Mention{}],
+        tags: [%Hunter.Tag{}],
+        application: %Hunter.Application{}
+      }
+    }
+  end
 
-    try do
-      st = Hunter.status(conn, status_id)
+  def show_notification(notification, tg_user_id, conn) do
+    status = Poison.decode!(notification, as: notification_nested_struct()).status
+
+    Logger.log(:info, "show_notification = #{inspect(status)}")    
+    show_post(status, tg_user_id, conn)
+  end
+
+  def show_post(st, tg_user_id, conn) do
+      status_id = st.id
 
       content = st.content |> HtmlSanitizeEx.Scrubber.scrub(Bleroma.Scrubber.Tg)
 
@@ -251,11 +232,6 @@ defmodule Bleroma.Utils do
         {:error, _} -> Nadia.send_message(tg_user_id, string_to_send, opts)
         {:ok, _} ->  {:ok}
       end
-
-    rescue err in Hunter.Error -> Logger.log(:error, "Error fetching status #{inspect(err)}");
-        Nadia.send_message(tg_user_id, "Status not found");
-        {:error, err}    
-    end
   end
   
 end

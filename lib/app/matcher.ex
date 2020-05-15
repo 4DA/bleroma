@@ -47,10 +47,7 @@ defmodule App.Matcher do
     Logger.log(:info, "notification from maston: #{inspect(message)}")
 
     payload = Map.get(message, "payload")
-    status = Map.get(Poison.decode!(payload), "status")
-    status_id = Map.get(status, "id")
-
-    show_post_direct(status, tg_id, conn)
+    show_notification(payload, tg_id, conn)
     {:noreply, state}
   end
 
