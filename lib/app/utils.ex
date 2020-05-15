@@ -211,9 +211,15 @@ defmodule Bleroma.Utils do
 
       content = st.content |> HtmlSanitizeEx.Scrubber.scrub(Bleroma.Scrubber.Tg)
 
+    in_reply_to_id = if st.in_reply_to_id do
+      " -> /" <> st.in_reply_to_id
+    else
+      ""
+    end
+
       string_to_send = ""
-      <> "@#{st.account.acct}\n"
-      <> "#{content}\n"
+      <> "@#{st.account.acct}" <> "#{in_reply_to_id}"
+      <> "\n#{content}\n"
       <> "/#{status_id} 🗘#{st.reblogs_count} ☆#{st.favourites_count}"
 
     reply_markup =  %Nadia.Model.InlineKeyboardMarkup{
