@@ -1,6 +1,7 @@
 defmodule Bleroma.Utils do
   require Logger
   require Nadia
+  require Bleroma.Scrubber.Tg
   
   def login_user(user_id, username, token, state) do
     base_instance = Application.get_env(:app, :instance_url)
@@ -208,9 +209,11 @@ defmodule Bleroma.Utils do
     try do
       st = Hunter.status(conn, status_id)
 
+      content = st.content |> HtmlSanitizeEx.Scrubber.scrub(Bleroma.Scrubber.Tg)
+
       string_to_send = ""
       <> "@#{st.account.acct}\n"
-      <> "#{st.content}\n"
+      <> "#{content}\n"
       <> "/#{status_id} 🗘#{st.reblogs_count} ☆#{st.favourites_count}"
 
     reply_markup =  %Nadia.Model.InlineKeyboardMarkup{
@@ -227,8 +230,8 @@ defmodule Bleroma.Utils do
       opts = [reply_markup: reply_markup]
 
       opts_parse_mode = opts ++
-      if (st.content =~ "<a" or st.content =~ "<b>" or st.content =~ "<i>" or
-        st.content =~ "<u>" or st.content =~ "<code>" or st.content =~ "<pre>") do
+      if (content =~ "<a" or content =~ "<b>" or content =~ "<i>" or
+        content =~ "<u>" or content =~ "<code>" or content =~ "<pre>") do
         [{:parse_mode, "HTML"}]
       else
         []

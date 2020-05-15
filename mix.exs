@@ -23,6 +23,8 @@ defmodule App.Mixfile do
       {:tesla, "~> 1.3.0"},
       {:poison, "~> 4.0"},
       {:websockex, "~> 0.4.2"}
+      {:websockex, "~> 0.4.2"},
+      {:html_sanitize_ex, "~> 1.4.0"}
     ]
 
   end
