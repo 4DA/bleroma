@@ -64,11 +64,10 @@ defmodule App.Matcher do
     {conn, state} = Utils.get_conn(update, state)
 
     # user is not authenticated
-    Logger.log(:info, "bearer: #{inspect(conn.bearer_token)}")
-
     if conn == nil do
       state = Commands.match_message(update, state)
     else
+      Logger.log(:info, "bearer: #{inspect(conn.bearer_token)}")
       state = CommandsLI.match_message(update, state)
     end
 

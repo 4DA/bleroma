@@ -2,6 +2,7 @@ defmodule Bleroma.Utils do
   require Logger
   require Nadia
   require Bleroma.Scrubber.Tg
+  require Bleroma.Helpers
 
   require Hunter
   alias Hunter.{Api.Request, Config}
@@ -29,7 +30,7 @@ defmodule Bleroma.Utils do
         nc
       rescue
         err in Hunter.Error ->
-          Logger.log(:error, "verify_creds error for tg_user_id=#{user_id}: #{inspect(err)}");
+          Logger.log(:error, "new_connection: verify_creds error for tg_user_id=#{user_id}: #{inspect(err)}");
           nil
       end
   end
@@ -46,15 +47,18 @@ defmodule Bleroma.Utils do
                {:ok, result} -> result
                {:error} -> nil
                end
-
-      try do
-        nc = Hunter.new([base_url: base_instance, bearer_token: bearer])
-        account = Hunter.verify_credentials(nc)
-        state = put_in(state[:conns][user_id], nc)
-        {nc, state}
-      rescue
-        err in Hunter.Error ->
-          Logger.log(:error, "verify_creds error for tg_user_id=#{user_id}: #{inspect(err)}"); {nil, state}
+      if bearer == nil do
+        {nil, state}
+      else
+        try do
+          nc = Hunter.new([base_url: base_instance, bearer_token: bearer])
+          account = Hunter.verify_credentials(nc)
+          state = put_in(state[:conns][user_id], nc)
+          {nc, state}
+        rescue
+          err in Hunter.Error ->
+            Logger.log(:error, "get_connection: verify_creds error for tg_user_id=#{user_id}: #{inspect(err)}"); {nil, state}
+        end
       end
     else
       {conn_mem, state}
@@ -180,14 +184,21 @@ defmodule Bleroma.Utils do
     }
   end
 
+  # @todo find out how to match string type
+  def show_status_str(status_str, tg_user_id) do
+    status = Poison.decode!(status_str, as: status_nested_struct())
+    Logger.log(:info, "show_status = #{inspect(status)}")
+    show_post(status, tg_user_id)
+  end
+
   def show_notification(notification, tg_user_id, conn) do
     status = Poison.decode!(notification, as: notification_nested_struct()).status
 
     Logger.log(:info, "show_notification = #{inspect(status)}")    
-    show_post(status, tg_user_id, conn)
+    show_post(status, tg_user_id)
   end
 
-  def show_post(st, tg_user_id, conn) do
+  def show_post(%Hunter.Status{} = st, tg_user_id) do
       status_id = st.id
 
       content = st.content |> HtmlSanitizeEx.Scrubber.scrub(Bleroma.Scrubber.Tg)

@@ -127,7 +127,7 @@ defmodule App.CommandsLI do
       try do
         status_id = Enum.at(String.split(update.message.text, "/"), 1)
         status = Hunter.status(conn, status_id)
-        Utils.show_post(status, tg_user_id, conn)
+        Utils.show_post(status, tg_user_id)
       rescue err in Hunter.Error ->
           Logger.log(:error, "Error fetching status #{inspect(err)}");
           Nadia.send_message(tg_user_id, "Status not found")

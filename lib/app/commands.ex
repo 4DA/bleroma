@@ -3,7 +3,7 @@ defmodule App.Commands do
   use App.Commander
   require Hunter
   require Bleroma.Utils
-
+  alias Bleroma.Utils
   alias App.Commands.Outside
 
   # You can create commands in the format `/command` by
@@ -13,15 +13,19 @@ defmodule App.Commands do
     send_message "Hello, " <> update.message.from.username
   end
 
-  command ["help"] do
-    # @todo generate this link via api
+
+  def getHelpStringAnon() do
+    # @TODO generate this link via api
     oauth_link = "https://birdity.club/oauth/authorize?client_id=FpWYvIh-founF77h7u06vN_bAyYDJVzARznVO-ZjKpc&response_type=code&redirect_uri=urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob&scope=read+write+follow"
 
+    "Visit [this link](#{oauth_link}) authenticate, and send me the code via /identify\n"
+    <> "\n/identify <token> :: login as user using oauth token\n"
+  end
+
+  command ["help"] do
     send_message(
-      "Visit [this link](#{oauth_link}) authenticate, and send me the code via /identify\n",
+      getHelpStringAnon(),
       [{:parse_mode, "markdown"}])
-    # <> "/identify <token> :: login as user using oauth token\n"
-    # <> "/logout :: logout",
   end
 
   command ["identify"] do
@@ -205,6 +209,17 @@ defmodule App.Commands do
   # The `message` macro must come at the end since it matches anything.
   # You may use it as a fallback.
   message do
-    send_message("Plese authenticate first")
+    if String.match?(update.message.text, ~r/^\/[a-zA-Z0-9]+$/) do
+      conn = Map.get(state.conns, update.message.from.id)
+      tg_user_id = update.message.from.id
+
+      status_id = Enum.at(String.split(update.message.text, "/"), 1)
+      case Bleroma.Helpers.status_dump_str("https://birdity.club", status_id) do
+        nil -> Nadia.send_message(tg_user_id, "Status not found")
+        status -> Utils.show_status_str(status, update.message.from.id)
+      end
+    else
+      send_message(getHelpStringAnon())
+    end
   end
 end
