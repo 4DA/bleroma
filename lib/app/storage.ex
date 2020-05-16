@@ -9,6 +9,10 @@ defmodule Storage do
     :dets.insert(table, {telegram_id, bearer})
   end
 
+  def delete_auth(table, telegram_id) do
+    :dets.delete(table, telegram_id)
+  end
+
   def get_auth(table, telegram_id) do
       case :dets.lookup(table, telegram_id) do
         [{telegram_id, auth}] -> {:ok, auth}

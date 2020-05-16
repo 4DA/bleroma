@@ -35,6 +35,11 @@ defmodule Bleroma.Utils do
       end
   end
 
+  def logout_user(user_id, state) do
+    Storage.delete_auth(state.storage, user_id)
+    %State{app: state.app, storage: state.storage, conns: Map.delete(state.conns, user_id)}
+  end
+
   def get_connection(user_id, state) do
     base_instance = Application.get_env(:app, :instance_url)
 
