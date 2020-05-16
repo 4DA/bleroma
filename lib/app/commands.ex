@@ -210,7 +210,7 @@ defmodule App.Commands do
   # You may use it as a fallback.
   message do
     if String.match?(update.message.text, ~r/^\/[a-zA-Z0-9]+$/) do
-      conn = Map.get(state.conns, update.message.from.id)
+      # {:ok, conn} = StateManager.get_conn(update.message.from.id)
       tg_user_id = update.message.from.id
 
       status_id = Enum.at(String.split(update.message.text, "/"), 1)

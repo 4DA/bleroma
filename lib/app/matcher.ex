@@ -61,14 +61,9 @@ defmodule App.Matcher do
   def handle_cast(update, state) do
     Logger.log(:info, "recv msg: #{inspect(update)}")
     
-    {conn, state} = Utils.get_conn(update, state)
-
-    # user is not authenticated
-    if conn == nil do
-      state = Commands.match_message(update, state)
-    else
-      Logger.log(:info, "bearer: #{inspect(conn.bearer_token)}")
-      state = CommandsLI.match_message(update, state)
+    case Utils.get_conn(update) do
+      {:ok, conn} -> CommandsLI.match_message(update, state)
+      :error -> state = Commands.match_message(update, state)
     end
 
     {:noreply, state}

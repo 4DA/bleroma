@@ -10,7 +10,7 @@ defmodule App.CommandsLI do
 
   command ["notifications"] do
     # try do
-      conn = Map.get(state.conns, update.message.from.id)
+      {:ok, conn} = StateManager.get_conn(update.message.from.id)
       Logger.log(:info, "notconn: #{inspect(conn)}")
       status = Hunter.notifications(conn)
 
@@ -23,7 +23,7 @@ defmodule App.CommandsLI do
   end
 
   command ["del"] do
-    conn = Map.get(state.conns, update.message.from.id)
+    {:ok, conn} = StateManager.get_conn(update.message.from.id)
     [_command | id] = String.split(update.message.text, " ")
     res = Hunter.destroy_status(conn, id)
     Logger.log(:init, "Deleted: #{id}")
@@ -31,7 +31,7 @@ defmodule App.CommandsLI do
   end
 
   callback_query_command "del" do
-    conn = Map.get(state.conns, update.callback_query.from.id)
+    {:ok, conn} = StateManager.get_conn(update.callback_query.from.id)
     [_command | id] = String.split(update.callback_query.data, " ")
 
     res = try do
@@ -56,27 +56,32 @@ defmodule App.CommandsLI do
       [{:parse_mode, "markdown"}])
   end
 
-  command ["identify"] do
-    [_command | args] = String.split(update.message.text, " ")
-
-    # send_message("Your arguments were: " <> Enum.join(args, " "))
-
-    token = Enum.at(args, 0)
-    user_id = update.message.from.id
-    username = update.message.from.username
-
-    # send_message("User id: " <> user_id <> " token: " <> token)
-    Logger.log(:info, "/identify from [id=#{user_id} name=#{username} oauth=#{token}]")
-
-    # verify creds
-    base_instance = Application.get_env(:app, :instance_url)
-
-    conn = Bleroma.Utils.login_user(user_id, username, token, state)
-    case conn do
-      {:ok, _, account} -> send_message("You have been authenticated as #{account.acct}")
-      {:error, reason} -> send_message("Authentication error")
-    end
+  command "logout" do
+    send_message("Done")
+    StateManager.delete_user(update.message.from.id)
   end
+
+  # command ["identify"] do
+    # [_command | args] = String.split(update.message.text, " ")
+
+    # # send_message("Your arguments were: " <> Enum.join(args, " "))
+
+    # token = Enum.at(args, 0)
+    # user_id = update.message.from.id
+    # username = update.message.from.username
+
+    # # send_message("User id: " <> user_id <> " token: " <> token)
+    # Logger.log(:info, "/identify from [id=#{user_id} name=#{username} oauth=#{token}]")
+
+    # # verify creds
+    # base_instance = Application.get_env(:app, :instance_url)
+
+    # conn = Bleroma.Utils.login_user(user_id, username, token, state)
+    # case conn do
+    #   {:ok, _, account} -> send_message("You have been authenticated as #{account.acct}")
+    #   {:error, reason} -> send_message("Authentication error")
+    # end
+  # end
 
 
   callback_query_command "choose" do
@@ -121,7 +126,7 @@ defmodule App.CommandsLI do
   # Message without commands, time for a new status
   message do
     if String.match?(update.message.text, ~r/^\/[a-zA-Z0-9]+$/) do
-      conn = Map.get(state.conns, update.message.from.id)
+      {:ok, conn} = StateManager.get_conn(update.message.from.id)
       tg_user_id = update.message.from.id
 
       try do

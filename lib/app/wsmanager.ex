@@ -10,6 +10,7 @@ defmodule App.WSManager do
   import Storage
   import Bleroma.Utils
   alias Bleroma.Utils
+  import StateManager
 
   # Server
   # ----------------------------------------------------------------------------
@@ -27,7 +28,12 @@ defmodule App.WSManager do
     storage = Storage.init()
     all_bearers = Storage.get_all(storage)
     websocks = Enum.map(all_bearers, fn [tg, bearer] ->
-      Bleroma.Websocks.start_link({tg, Utils.new_connection(tg, bearer), matcher})
+      {:ok, conn} = StateManager.get_conn(tg); 
+      Bleroma.Websocks.start_link(
+        {tg,
+         # Utils.new_connection(tg, bearer),
+         conn,
+         matcher})
     end)
 
     {:ok, %{app: app, storage: storage, websocks: websocks}}

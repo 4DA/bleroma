@@ -7,8 +7,9 @@ defmodule StateManager do
   defstruct app: nil, storage: nil, conns: %{}
 
   # server
-  @impl true
-  def start_link(arg) do
+  # -------------------------------------------------------------------------
+
+  def start_link() do
     GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
@@ -42,13 +43,44 @@ defmodule StateManager do
     end
   end
 
+  @impl true
+  def handle_call({:add_user, tg_user_id, conn}, _from, state) do
+    
+    Storage.store_auth(state.storage, tg_user_id, conn.bearer_token)
+    {:reply, :ok,
+     %StateManager{state | conns: Map.put(state.conns, tg_user_id, conn)}}
+  end
+
+  @impl true
+  def handle_call({:delete_user, tg_user_id}, _from, state) do
+    Storage.delete_auth(state.storage, tg_user_id)
+    Map
+    {:reply, :ok,
+     %StateManager{state | conns: Map.delete(state.conns, tg_user_id)}}
+  end
+
+  @impl true
+  def handle_call({:get_app}, _from, state) do
+    {:reply, state.app, state}
+  end
+
   # client
+  # -------------------------------------------------------------------------
+
   def get_conn(tg_user_id) do
     GenServer.call(__MODULE__, {:get_conn, tg_user_id})
   end
 
-  def add_conn(tg_user_id, bearer_token) do
-    GenServer.cast(__MODULE__, {:add_conn, tg_user_id, bearer_token})
+  def add_user(tg_user_id, conn) do
+    GenServer.call(__MODULE__, {:add_user, tg_user_id, conn})
+  end
+
+  def delete_user(tg_user_id) do
+    GenServer.call(__MODULE__, {:delete_user, tg_user_id})
+  end
+
+  def get_app() do
+    GenServer.call(__MODULE__, {:get_app})
   end
 
 end

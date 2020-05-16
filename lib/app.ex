@@ -2,6 +2,7 @@ defmodule App do
   use Application
 
   require Logger
+  require StateManager
 
   def start(_type, _args) do
     bot_name = Application.get_env(:app, :bot_name)
@@ -23,6 +24,7 @@ defmodule App do
     children = [
       worker(App.Poller, []),
       worker(App.Matcher, []),
+      worker(StateManager, []),
     ]
 
     opts = [strategy: :one_for_one, name: App.Supervisor]
@@ -31,11 +33,16 @@ defmodule App do
     {_, matcher_pid, _, _} = List.keyfind(Supervisor.which_children(sv_pid), App.Matcher, 0)
     Logger.log(:info, "sv: #{inspect(sv_pid)} | children: #{inspect(Supervisor.which_children(sv_pid))}")
     
-    wsm = Supervisor.start_child(sv_pid, %{id: App.WSManager,
-                                           start: {App.WSManager, :start_link, [matcher_pid]}
-                                          })
+    wsm = Supervisor.start_child(sv_pid,
+      %{id: App.WSManager,
+        start: {App.WSManager, :start_link, [matcher_pid]}
+      })
 
     Logger.log(:info, "wsm = #{inspect(wsm)}")
+
+    # {:ok, conn} = StateManager.get_conn(36577752)
+    # Logger.log(:info, "conn = #{inspect(conn)}")
+
     {:ok, sv_pid}
   end
 end
