@@ -69,7 +69,7 @@ defmodule Bleroma.Utils do
     state
   ) do
 
-    conn = get_conn(update)
+    {:ok, conn} = get_conn(update)
 
     caps = Regex.scan(~r/\/([a-zA-Z0-9]+)/, rmsg.text)
 
@@ -79,10 +79,10 @@ defmodule Bleroma.Utils do
     else
       reply_status_id = List.last(List.last(caps))
 
-      Logger.log(:info, "catched reply to msg #{inspect(rmsg)} stat id: #{reply_status_id}")
+      source_status = Hunter.status(conn, reply_status_id)
 
       status = Hunter.create_status(conn, update.message.text,
-        [visibility: "private", in_reply_to_id: reply_status_id])
+        [visibility: "{source_status.visibility}", in_reply_to_id: reply_status_id])
 
       reply_markup =  %Nadia.Model.InlineKeyboardMarkup{
         inline_keyboard: [

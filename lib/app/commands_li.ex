@@ -137,10 +137,15 @@ defmodule App.CommandsLI do
           Logger.log(:error, "Error fetching status #{inspect(err)}");
           Nadia.send_message(tg_user_id, "Status not found")
       end
-
     else
-      Utils.make_post(update, state)
+      try do
+        Utils.make_post(update, state)
+      rescue err in Hunter.Error ->
+          Logger.log(:error, "Error posting status #{inspect(err)}");
+        Nadia.send_message(update.message.from.id, "Error posting status: #{err.reason}")
+      catch
+        :exit, _ -> Logger.log(:error, "Exit")
+      end
     end
   end
-
 end

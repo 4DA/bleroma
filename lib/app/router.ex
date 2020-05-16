@@ -9,15 +9,7 @@ defmodule App.Router do
       import App.Router
 
       def match_message(message, state) do
-        try do
-          apply(__MODULE__, :do_match_message, [message, state])
-        rescue
-          err in FunctionClauseError ->
-            Logger.log(:error, """
-            Errored when matching command. #{Poison.encode!(err)}
-            Message was: #{Poison.encode!(message)}
-            """)
-        end
+        apply(__MODULE__, :do_match_message, [message, state])
       end
     end
   end
