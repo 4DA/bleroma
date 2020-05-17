@@ -88,7 +88,10 @@ defmodule Bleroma.Utils do
 
     {:ok, conn} = get_conn(update)
 
-    caps = Regex.scan(~r/\/([a-zA-Z0-9]+)/, rmsg.text)
+    content = if rmsg.text do rmsg.text
+              else rmsg.caption end
+
+    caps = Regex.scan(~r/\/([a-zA-Z0-9]+)/, content)
 
     if Enum.empty?(caps) do
       Nadia.send_message(
@@ -190,21 +193,24 @@ defmodule Bleroma.Utils do
     # show_post(status, tg_user_id)
   end
 
+  def post_from_template(acct, content, status_id,
+                         reblogs_count, favourites_count, reply_to \\ nil) do
+    reply_str = if reply_to do " -> /" <> reply_to
+                else "" end
+
+    ""
+    <> "@#{acct}" <> "#{reply_str}"
+    <> "\n#{content}\n"
+    <> "/#{status_id} 🗘#{reblogs_count} ☆#{favourites_count}"  
+  end
+
   def show_post(%Hunter.Status{} = st, tg_user_id) do
-      status_id = st.id
+    status_id = st.id
 
-      content = st.content |> HtmlSanitizeEx.Scrubber.scrub(Bleroma.Scrubber.Tg)
+    content = st.content |> HtmlSanitizeEx.Scrubber.scrub(Bleroma.Scrubber.Tg)
 
-    in_reply_to_id = if st.in_reply_to_id do
-      " -> /" <> st.in_reply_to_id
-    else
-      ""
-    end
-
-      string_to_send = ""
-      <> "@#{st.account.acct}" <> "#{in_reply_to_id}"
-      <> "\n#{content}\n"
-      <> "/#{status_id} 🗘#{st.reblogs_count} ☆#{st.favourites_count}"
+    string_to_send = post_from_template(
+      st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, st.in_reply_to_id)
 
     reply_markup =  %Nadia.Model.InlineKeyboardMarkup{
           inline_keyboard: [
@@ -231,9 +237,24 @@ defmodule Bleroma.Utils do
       # https://core.telegram.org/bots/api#formatting-options
       # if send is failed, send message with plain parse mode
 
-      case Nadia.send_message(tg_user_id, string_to_send, opts_parse_mode) do
-        {:error, _} -> Nadia.send_message(tg_user_id, string_to_send, opts)
-        {:ok, _} ->  {:ok}
+      if (Enum.count(st.media_attachments) > 0 and hd(st.media_attachments).type == "image") do
+        # file_path = get_file_from_pleroma(Enum.at(st.media_attachments, 0).remote_url)
+        url = Enum.at(st.media_attachments, 0).remote_url
+
+        content = HtmlSanitizeEx.strip_tags(st.content)
+
+        string_to_send = post_from_template(
+          st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, st.in_reply_to_id)
+
+        opts = opts ++ [caption: HtmlSanitizeEx.strip_tags(string_to_send)]
+        Nadia.send_photo(tg_user_id, url, opts)
+
+        Logger.log(:info, "sending photo #{inspect(opts)}")
+      else
+        case Nadia.send_message(tg_user_id, string_to_send, opts_parse_mode) do
+          {:error, _} -> Nadia.send_message(tg_user_id, string_to_send, opts)
+          {:ok, _} ->  {:ok}
+        end
       end
   end
   
