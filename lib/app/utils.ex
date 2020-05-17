@@ -82,9 +82,9 @@ defmodule Bleroma.Utils do
   end
 
   def make_post(
-    %Nadia.Model.Update{message: %{reply_to_message: %{from: %{username: bleroma_bot_id}} = rmsg}} = update,
-    state
-  ) do
+    %Nadia.Model.Update {
+      message: %{reply_to_message: %{from: %{username: bleroma_bot_id}} = rmsg}
+    } = update) do
 
     {:ok, conn} = get_conn(update)
 
@@ -93,18 +93,11 @@ defmodule Bleroma.Utils do
     if Enum.empty?(caps) do
       Nadia.send_message(
         update.message.from.id, "Please reply only to bot messages with id links i.e /abcdef123")
+      :error
     else
       reply_status_id = List.last(List.last(caps))
-
       source_status = Hunter.status(conn, reply_status_id)
-
-      status = Hunter.create_status(conn, update.message.text,
-        [visibility: "{source_status.visibility}", in_reply_to_id: reply_status_id])
-
-      reply_markup =  get_reply_markup(status)
-
-      Nadia.send_message(update.message.from.id, "Reply posted: /#{status.id}",
-        [reply_markup: reply_markup])
+      make_post(update, [visibility: "{source_status.visibility}", in_reply_to_id: reply_status_id])
     end
   end
 
@@ -120,11 +113,9 @@ defmodule Bleroma.Utils do
     fname
   end
 
-  def make_post(update, state) do
+  def make_post(update, params \\ [visibility: "private"]) do
     {:ok, conn} = get_conn(update)
     user_id = update.message.from.id
-
-    params = [visibility: "private"]
 
     params = params ++
     if (Enum.count(update.message.photo) > 0) do
@@ -135,6 +126,8 @@ defmodule Bleroma.Utils do
         Enum.at(update.message.photo, photo_idx).file_id)
 
       media = Hunter.upload_media(conn, file_path)
+
+      File.rm(file_path)
 
       [media_ids: [media.id]]
     else
@@ -149,10 +142,7 @@ defmodule Bleroma.Utils do
 
     status = Hunter.create_status(conn, status_text, params)
 
-    reply_markup =  get_reply_markup(status)
-
-    Nadia.send_message(user_id, "Status posted: /#{status.id}",
-       [reply_markup: reply_markup])
+    {status, get_reply_markup(status)}
   end
 
   defp status_nested_struct do
@@ -237,7 +227,7 @@ defmodule Bleroma.Utils do
         []
       end
 
-      # telegram supports very little subset of html tags:
+      # telegram supports very small subset of html tags:
       # https://core.telegram.org/bots/api#formatting-options
       # if send is failed, send message with plain parse mode
 

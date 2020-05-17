@@ -123,8 +123,8 @@ defmodule App.CommandsLI do
       ])
   end
 
-  # Message without commands, time for a new status
   message do
+    # command with id
     if update.message.text != nil and String.match?(update.message.text, ~r/^\/[a-zA-Z0-9]+$/) do
       {:ok, conn} = StateManager.get_conn(update.message.from.id)
       tg_user_id = update.message.from.id
@@ -136,9 +136,16 @@ defmodule App.CommandsLI do
       rescue err in Hunter.Error ->
           Nadia.send_message(tg_user_id, "Error fetching status #{err.reason}")
       end
+
+    # try to make post
     else
       try do
-        Utils.make_post(update, state)
+        case Utils.make_post(update) do
+          {status, reply_markup} ->
+            Nadia.send_message(update.message.from.id, "Posted: /#{status.id}",
+              [reply_markup: reply_markup])
+          {:error} -> :error
+        end
       rescue err in Hunter.Error ->
           Logger.log(:error, "Error posting status #{inspect(err)}");
           Nadia.send_message(update.message.from.id, "Error posting status: #{err.reason}")
