@@ -114,10 +114,9 @@ defmodule Bleroma.Utils do
     %HTTPoison.Response{body: body} = HTTPoison.get!(link)
 
     # TODO extend Hunter API to accept media as stream
-    fname = String.replace(link, "/", "_")
-    # fpath = "/tmp/#{fname}"
+    fname = List.last(String.split(link, "/"))
+    fname = "#{tg_user_id}_#{fname}"
     File.write!(fname, body)
-
     fname
   end
 
@@ -125,25 +124,30 @@ defmodule Bleroma.Utils do
     {:ok, conn} = get_conn(update)
     user_id = update.message.from.id
 
-    params = []
+    params = [visibility: "private"]
 
-    params = params ++ [visibility: "private"]
-
+    params = params ++
     if (Enum.count(update.message.photo) > 0) do
       # TODO determine (how?) which photosize to use
-      photo_idx = 0
+      photo_idx = if Enum.count(update.message.photo) > 1 do 1 else 0 end
+        
       file_path = get_file_from_tg(update.message.from.id,
         Enum.at(update.message.photo, photo_idx).file_id)
-      Logger.log(:info, "got file: #{file_path}")
 
       media = Hunter.upload_media(conn, file_path)
-      Logger.log(:info, "uploaded media: #{inspect(media)}")      
 
-      params = params ++ [media: media.id]
+      [media_ids: [media.id]]
+    else
+      []
     end
 
-    status = Hunter.create_status(conn, update.message.text, params)
-    Logger.log(:info, "new status: #{inspect(status)}")
+    status_text = case {update.message.text, update.message.caption} do
+      {nil, nil} -> ""
+      {text, nil} -> text
+      {nil, caption} -> caption
+    end
+
+    status = Hunter.create_status(conn, status_text, params)
 
     reply_markup =  get_reply_markup(status)
 
