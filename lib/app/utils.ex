@@ -200,9 +200,9 @@ defmodule Bleroma.Utils do
     quote_str = if parent do
       if String.length(String.trim(parent)) > 80
         do
-        "\n > #{String.slice(0, 79)}..."
+        "\n > #{String.slice(parent, 0, 79)}...\n"
         else
-          "\n > #{parent}"
+          "\n > #{parent}\n"
       end
     else
       "" end
@@ -215,6 +215,7 @@ defmodule Bleroma.Utils do
   end
 
   def show_post(%Hunter.Status{} = st, tg_user_id) do
+    {:ok, conn} = StateManager.get_conn(tg_user_id)
     status_id = st.id
 
     content = st.content |> HtmlSanitizeEx.Scrubber.scrub(Bleroma.Scrubber.Tg)
@@ -240,6 +241,12 @@ defmodule Bleroma.Utils do
         []
       end
 
+      parent = if (st.in_reply_to_id) do
+        HtmlSanitizeEx.strip_tags(Hunter.status(conn, st.in_reply_to_id).content)
+      else
+        nil
+      end
+
       # telegram supports very small subset of html tags:
       # https://core.telegram.org/bots/api#formatting-options
       # if send is failed, send message with plain parse mode
@@ -251,14 +258,14 @@ defmodule Bleroma.Utils do
         content = HtmlSanitizeEx.strip_tags(st.content)
 
         string_to_send = post_from_template(
-          st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, st.in_reply_to_id)
+          st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, st.in_reply_to_id, parent)
 
         opts = opts ++ [caption: string_to_send]
         Nadia.send_photo(tg_user_id, url, opts)
 
       else
         string_to_send = post_from_template(
-          st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, st.in_reply_to_id)
+          st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, st.in_reply_to_id, parent)
 
         case Nadia.send_message(tg_user_id, string_to_send, opts_parse_mode) do
           {:error, _} -> Nadia.send_message(tg_user_id, string_to_send, opts)
