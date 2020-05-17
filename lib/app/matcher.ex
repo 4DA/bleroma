@@ -54,6 +54,14 @@ defmodule App.Matcher do
   @impl true
   def handle_cast({:masto, tg_id, %{"event" => "update"} = message, conn} = arg, state) do
     Logger.log(:info, "update from maston: #{inspect(message)}")
+    payload = Map.get(message, "payload")
+    show_update(payload, tg_id, conn)
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_cast({:masto, tg_id, message, conn} = arg, state) do
+    Logger.log(:info, "ignoring update from maston: #{inspect(message)}")
     {:noreply, state}
   end
 

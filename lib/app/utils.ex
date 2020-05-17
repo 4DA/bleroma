@@ -171,6 +171,12 @@ defmodule Bleroma.Utils do
     show_post(status, tg_user_id)
   end
 
+  def show_update(update, tg_user_id, conn) do
+    status = Poison.decode!(update, as: status_nested_struct())
+    Logger.log(:info, "ignored update = #{inspect(status)}")
+    # show_post(status, tg_user_id)
+  end
+
   def show_post(%Hunter.Status{} = st, tg_user_id) do
       status_id = st.id
 
