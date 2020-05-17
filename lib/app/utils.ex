@@ -64,6 +64,23 @@ defmodule Bleroma.Utils do
   
   bleroma_bot_id = Application.get_env(:app, :bot_name)
 
+  defp get_reply_markup(status) do
+    %Nadia.Model.InlineKeyboardMarkup{
+      inline_keyboard: [
+        [
+          %{
+            text: "Open",
+            url: "#{status.url}"
+          },
+          %{
+            callback_data: "/del #{status.id}",
+            text: "Delete"
+          }
+        ],
+      ]
+    }
+  end
+
   def make_post(
     %Nadia.Model.Update{message: %{reply_to_message: %{from: %{username: bleroma_bot_id}} = rmsg}} = update,
     state
@@ -84,49 +101,51 @@ defmodule Bleroma.Utils do
       status = Hunter.create_status(conn, update.message.text,
         [visibility: "{source_status.visibility}", in_reply_to_id: reply_status_id])
 
-      reply_markup =  %Nadia.Model.InlineKeyboardMarkup{
-        inline_keyboard: [
-          [
-            %{
-              text: "Open",
-              url: "#{status.url}"
-            },
-            %{
-              callback_data: "/del #{status.id}",
-              text: "Delete"
-            }
-          ],
-        ]
-      }
+      reply_markup =  get_reply_markup(status)
 
       Nadia.send_message(update.message.from.id, "Reply posted: /#{status.id}",
         [reply_markup: reply_markup])
     end
   end
 
+  def get_file_from_tg(tg_user_id, file_id) do
+    {:ok, nadia_file} = Nadia.get_file(file_id)
+    {:ok, link} = Nadia.get_file_link(nadia_file)
+    %HTTPoison.Response{body: body} = HTTPoison.get!(link)
+
+    # TODO extend Hunter API to accept media as stream
+    fname = String.replace(link, "/", "_")
+    # fpath = "/tmp/#{fname}"
+    File.write!(fname, body)
+
+    fname
+  end
+
   def make_post(update, state) do
     {:ok, conn} = get_conn(update)
     user_id = update.message.from.id
 
-    status = Hunter.create_status(conn, update.message.text, [visibility: "private"])
+    params = []
+
+    params = params ++ [visibility: "private"]
+
+    if (Enum.count(update.message.photo) > 0) do
+      # TODO determine (how?) which photosize to use
+      photo_idx = 0
+      file_path = get_file_from_tg(update.message.from.id,
+        Enum.at(update.message.photo, photo_idx).file_id)
+      Logger.log(:info, "got file: #{file_path}")
+
+      media = Hunter.upload_media(conn, file_path)
+      Logger.log(:info, "uploaded media: #{inspect(media)}")      
+
+      params = params ++ [media: media.id]
+    end
+
+    status = Hunter.create_status(conn, update.message.text, params)
     Logger.log(:info, "new status: #{inspect(status)}")
 
-    reply_markup =  %Nadia.Model.InlineKeyboardMarkup{
-          inline_keyboard: [
-            [
-              %{
-                text: "Open",
-                url: "#{status.url}"
-              },
-              %{
-                callback_data: "/del #{status.id}",
-                text: "Delete"
-              }
-            ],
-          ]
-        }
-
-    params = [visibility: "private", reply_markup: reply_markup]
+    reply_markup =  get_reply_markup(status)
 
     Nadia.send_message(user_id, "Status posted: /#{status.id}",
        [reply_markup: reply_markup])
