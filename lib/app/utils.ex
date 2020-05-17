@@ -195,11 +195,11 @@ defmodule Bleroma.Utils do
 
   def post_from_template(acct, content, status_id,
                          reblogs_count, favourites_count, reply_to \\ nil) do
-    reply_str = if reply_to do " -> /" <> reply_to
+    reply_str = if reply_to do " → /" <> reply_to
                 else "" end
 
     ""
-    <> "@#{acct}" <> "#{reply_str}"
+    <> "#{acct}" <> "#{reply_str}"
     <> "\n#{content}\n"
     <> "/#{status_id} 🗘#{reblogs_count} ☆#{favourites_count}"  
   end
@@ -246,7 +246,7 @@ defmodule Bleroma.Utils do
         string_to_send = post_from_template(
           st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, st.in_reply_to_id)
 
-        opts = opts ++ [caption: HtmlSanitizeEx.strip_tags(string_to_send)]
+        opts = opts ++ [caption: string_to_send]
         Nadia.send_photo(tg_user_id, url, opts)
 
         Logger.log(:info, "sending photo #{inspect(opts)}")
