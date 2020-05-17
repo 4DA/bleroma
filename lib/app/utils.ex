@@ -194,12 +194,22 @@ defmodule Bleroma.Utils do
   end
 
   def post_from_template(acct, content, status_id,
-                         reblogs_count, favourites_count, reply_to \\ nil) do
-    reply_str = if reply_to do " → /" <> reply_to
-                else "" end
+                         reblogs_count, favourites_count, reply_to \\ nil, parent \\ nil) do
+
+    reply_str = if reply_to do " → /" <> reply_to else "" end
+    quote_str = if parent do
+      if String.length(String.trim(parent)) > 80
+        do
+        "\n > #{String.slice(0, 79)}..."
+        else
+          "\n > #{parent}"
+      end
+    else
+      "" end
 
     ""
-    <> "#{acct}" <> "#{reply_str}"
+    <> "#{acct}" <> "#{reply_str}" <> ":"
+    <> quote_str
     <> "\n#{content}\n"
     <> "/#{status_id} 🗘#{reblogs_count} ☆#{favourites_count}"  
   end
@@ -208,9 +218,6 @@ defmodule Bleroma.Utils do
     status_id = st.id
 
     content = st.content |> HtmlSanitizeEx.Scrubber.scrub(Bleroma.Scrubber.Tg)
-
-    string_to_send = post_from_template(
-      st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, st.in_reply_to_id)
 
     reply_markup =  %Nadia.Model.InlineKeyboardMarkup{
           inline_keyboard: [
@@ -249,8 +256,10 @@ defmodule Bleroma.Utils do
         opts = opts ++ [caption: string_to_send]
         Nadia.send_photo(tg_user_id, url, opts)
 
-        Logger.log(:info, "sending photo #{inspect(opts)}")
       else
+        string_to_send = post_from_template(
+          st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, st.in_reply_to_id)
+
         case Nadia.send_message(tg_user_id, string_to_send, opts_parse_mode) do
           {:error, _} -> Nadia.send_message(tg_user_id, string_to_send, opts)
           {:ok, _} ->  {:ok}
