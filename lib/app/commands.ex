@@ -216,7 +216,7 @@ defmodule App.Commands do
       status_id = Enum.at(String.split(update.message.text, "/"), 1)
       case Bleroma.Helpers.status_dump_str("https://birdity.club", status_id) do
         nil -> Nadia.send_message(tg_user_id, "Status not found")
-        status -> Utils.show_status_str(status, update.message.from.id)
+        status -> Utils.show_status_as_anon(status, update.message.from.id)
       end
     else
       send_message(getHelpStringAnon())

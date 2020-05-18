@@ -64,7 +64,7 @@ defmodule Bleroma.Utils do
   
   bleroma_bot_id = Application.get_env(:app, :bot_name)
 
-  defp get_reply_markup(status) do
+  defp new_status_reply_markup(status) do
     %Nadia.Model.InlineKeyboardMarkup{
       inline_keyboard: [
         [
@@ -145,7 +145,7 @@ defmodule Bleroma.Utils do
 
     status = Hunter.create_status(conn, status_text, params)
 
-    {status, get_reply_markup(status)}
+    {status, new_status_reply_markup(status)}
   end
 
   defp status_nested_struct do
@@ -174,17 +174,17 @@ defmodule Bleroma.Utils do
   end
 
   # @todo find out how to match string type
-  def show_status_str(status_str, tg_user_id) do
+  def show_status_as_anon(status_str, tg_user_id) do
     status = Poison.decode!(status_str, as: status_nested_struct())
     Logger.log(:info, "show_status = #{inspect(status)}")
-    show_post(status, tg_user_id)
+    show_post(status, tg_user_id, nil)
   end
 
   def show_notification(notification, tg_user_id, conn) do
     status = Poison.decode!(notification, as: notification_nested_struct()).status
 
     Logger.log(:info, "show_notification = #{inspect(status)}")    
-    show_post(status, tg_user_id)
+    show_post(status, tg_user_id, conn)
   end
 
   def show_update(update, tg_user_id, conn) do
@@ -194,7 +194,7 @@ defmodule Bleroma.Utils do
   end
 
   def post_from_template(acct, content, status_id,
-    reblogs_count, favourites_count, html \\ true, reply_to \\ nil, parent \\ nil) do
+    reblogs_count, favourites_count, reply_count, html \\ true, reply_to \\ nil, parent \\ nil) do
 
     ito = if html == true do "<i>" else "" end
     itc = if html == true do "</i>" else "" end
@@ -214,26 +214,65 @@ defmodule Bleroma.Utils do
     <> "#{acct}" <> "#{reply_str}" <> ":"
     <> quote_str
     <> "\n#{content}\n"
-    <> "/#{status_id} 🗘#{reblogs_count} ☆#{favourites_count}"  
+    <> "/#{status_id} ↶#{reply_count} 🗘#{reblogs_count} ☆#{favourites_count}"
   end
 
-  def show_post(%Hunter.Status{} = st, tg_user_id) do
+  defp status_reply_markup(st, conn) do
+    me = if conn do Hunter.verify_credentials(conn) else nil end
+
+    inline_keyboard = [
+      %{
+        text: "Open",
+        url: "#{st.url}"
+      }
+    ]
+
+    ++
+
+    if me != nil do 
+      if (st.account.acct == me.acct) do
+        [
+          %{
+            callback_data: "/del #{st.id}",
+            text: "Delete"
+          }
+        ]
+      else
+        [
+          %{
+            callback_data: "/repost #{st.id}",
+            text: "Repost"
+          },
+          %{
+            callback_data: "/like #{st.id}",
+            text: "Like"
+          }
+        ]
+      end
+    else
+      []
+    end
+    
+    Logger.log(:info, "inline kbd: #{inspect(inline_keyboard)}")
+    
+    %Nadia.Model.InlineKeyboardMarkup{
+          inline_keyboard: [
+            inline_keyboard
+          ]
+    }
+  end
+  
+
+  def show_post(%Hunter.Status{} = st, tg_user_id, conn) do
     {:ok, conn} = StateManager.get_conn(tg_user_id)
     status_id = st.id
 
+    Logger.log(:info, "post = #{inspect(st)}")
+
     content = st.content |> HtmlSanitizeEx.Scrubber.scrub(Bleroma.Scrubber.Tg)
 
-    reply_markup =  %Nadia.Model.InlineKeyboardMarkup{
-          inline_keyboard: [
-            [
-              %{
-                text: "Open",
-                url: "#{st.url}"
-              }
-            ],
-          ]
-        }
-
+    reply_markup = status_reply_markup(st, conn)
+    
       opts = [reply_markup: reply_markup]
 
       opts_parse_mode = opts ++ [{:parse_mode, "HTML"}]
@@ -255,14 +294,14 @@ defmodule Bleroma.Utils do
         content = HtmlSanitizeEx.strip_tags(st.content)
 
         string_to_send = post_from_template(
-          st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, false, st.in_reply_to_id, parent)
+          st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, 0, false, st.in_reply_to_id, parent)
 
         opts = opts ++ [caption: string_to_send]
         Nadia.send_photo(tg_user_id, url, opts)
 
       else
         string_to_send = post_from_template(
-          st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, false, st.in_reply_to_id, parent)
+          st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, 0, false, st.in_reply_to_id, parent)
 
         case Nadia.send_message(tg_user_id, string_to_send, opts_parse_mode) do
           {:error, _} -> Nadia.send_message(tg_user_id, string_to_send, opts)
