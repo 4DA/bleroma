@@ -194,15 +194,18 @@ defmodule Bleroma.Utils do
   end
 
   def post_from_template(acct, content, status_id,
-                         reblogs_count, favourites_count, reply_to \\ nil, parent \\ nil) do
+    reblogs_count, favourites_count, html \\ true, reply_to \\ nil, parent \\ nil) do
+
+    ito = if html == true do "<i>" else "" end
+    itc = if html == true do "</i>" else "" end
 
     reply_str = if reply_to do " → /" <> reply_to else "" end
     quote_str = if parent do
       if String.length(String.trim(parent)) > 80
         do
-        "\n > #{String.slice(parent, 0, 79)}...\n"
+        "\n > #{ito}#{String.slice(parent, 0, 79)}#{itc}...\n"
         else
-          "\n > #{parent}\n"
+          "\n > #{ito}#{parent}#{itc}\n"
       end
     else
       "" end
@@ -233,13 +236,7 @@ defmodule Bleroma.Utils do
 
       opts = [reply_markup: reply_markup]
 
-      opts_parse_mode = opts ++
-      if (content =~ "<a" or content =~ "<b>" or content =~ "<i>" or
-        content =~ "<u>" or content =~ "<code>" or content =~ "<pre>") do
-        [{:parse_mode, "HTML"}]
-      else
-        []
-      end
+      opts_parse_mode = opts ++ [{:parse_mode, "HTML"}]
 
       parent = if (st.in_reply_to_id) do
         HtmlSanitizeEx.strip_tags(Hunter.status(conn, st.in_reply_to_id).content)
@@ -258,14 +255,14 @@ defmodule Bleroma.Utils do
         content = HtmlSanitizeEx.strip_tags(st.content)
 
         string_to_send = post_from_template(
-          st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, st.in_reply_to_id, parent)
+          st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, false, st.in_reply_to_id, parent)
 
         opts = opts ++ [caption: string_to_send]
         Nadia.send_photo(tg_user_id, url, opts)
 
       else
         string_to_send = post_from_template(
-          st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, st.in_reply_to_id, parent)
+          st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, false, st.in_reply_to_id, parent)
 
         case Nadia.send_message(tg_user_id, string_to_send, opts_parse_mode) do
           {:error, _} -> Nadia.send_message(tg_user_id, string_to_send, opts)
