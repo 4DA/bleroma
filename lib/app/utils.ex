@@ -69,12 +69,12 @@ defmodule Bleroma.Utils do
       inline_keyboard: [
         [
           %{
-            text: "Open",
+            text: "open",
             url: "#{status.url}"
           },
           %{
             callback_data: "/del #{status.id}",
-            text: "Delete"
+            text: "delete"
           }
         ],
       ]
@@ -224,12 +224,12 @@ defmodule Bleroma.Utils do
     <> "\n/#{status_id} ↶#{reply_count} 🗘#{reblogs_count} ☆#{favourites_count}"
   end
 
-  defp status_reply_markup(st, conn) do
+  def status_reply_markup(st, conn) do
     me = if conn do Hunter.verify_credentials(conn) else nil end
 
     inline_keyboard = [
       %{
-        text: "Open",
+        text: "open",
         url: "#{st.url}"
       }
     ]
@@ -246,15 +246,18 @@ defmodule Bleroma.Utils do
         ]
       else
         repost_cmd = if st.reblogged, do: "/unrepost", else: "/repost"
+        repost_text = if st.reblogged, do: "unrepost", else: "repost"
+
         like_cmd = if st.favourited, do: "/unlike", else: "/like"
+        like_text = if st.favourited, do: "unlike", else: "like"
         [
           %{
             callback_data: "#{repost_cmd} #{st.id}",
-            text: "Repost"
+            text: "#{repost_text}"
           },
           %{
             callback_data: "#{like_cmd} #{st.id}",
-            text: "Like"
+            text: "#{like_text}"
           }
         ]
       end
@@ -332,6 +335,19 @@ defmodule Bleroma.Utils do
   def send_post_to_tg(tg_user_id, {:photo, url, opts}) do
     Nadia.send_photo(tg_user_id, url, opts)
   end
-  
 
+  def update_tg_message(update, status_id, conn) do
+    Logger.log(:info, "edit_req = #{inspect(update)}")
+    st = Hunter.status(conn, status_id)
+
+    case prepare_post(st, update.callback_query.from.id, conn) do
+      {:photo, url, opts} ->
+        Nadia.edit_message_caption(update.callback_query.message.chat.id,
+          update.callback_query.message.message_id, nil, opts)
+
+      {:message, string_to_send, opts} ->
+        Nadia.edit_message_text(update.callback_query.message.chat.id,
+          update.callback_query.message.message_id, nil, string_to_send, opts)
+    end
+  end
 end
