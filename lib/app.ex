@@ -38,11 +38,6 @@ defmodule App do
         start: {App.WSManager, :start_link, [matcher_pid]}
       })
 
-    Logger.log(:info, "wsm = #{inspect(wsm)}")
-
-    # {:ok, conn} = StateManager.get_conn(36577752)
-    # Logger.log(:info, "conn = #{inspect(conn)}")
-
     {:ok, sv_pid}
   end
 end

@@ -22,8 +22,11 @@ defmodule App.Mixfile do
       {:nadia, "~> 0.6.0"},
       {:tesla, "~> 1.3.0"},
       {:poison, "~> 4.0"},
+      # upstream without my login_ouath fix
       # {:hunter, "~> 0.5.1"}
       {:hunter, git: "https://github.com/4DA/hunter.git", branch: "master"},
+      # for local debugging:
+      # {:hunter, path: "deps/hunter"},
       {:websockex, "~> 0.4.2"},
       {:html_sanitize_ex, "~> 1.4.0"}
     ]
