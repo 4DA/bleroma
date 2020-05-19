@@ -22,14 +22,6 @@ defmodule App.CommandsLI do
     # end
   end
 
-  command ["del"] do
-    {:ok, conn} = StateManager.get_conn(update.message.from.id)
-    [_command | id] = String.split(update.message.text, " ")
-    res = Hunter.destroy_status(conn, id)
-    Logger.log(:init, "Deleted: #{id}")
-    send_message("Deleted: #{id}")
-  end
-
   callback_query_command "del" do
     {:ok, conn} = StateManager.get_conn(update.callback_query.from.id)
     [_command | id] = String.split(update.callback_query.data, " ")
@@ -40,8 +32,68 @@ defmodule App.CommandsLI do
     rescue
       err in Hunter.Error -> {:error, "#{inspect(err)}"};
                               Logger.log(:error, "Delete error: #{inspect(err)}");
-                              answer_callback_query(text: "Error")
+                              answer_callback_query(text: "#{inspect(err.reason)}")
     end
+  end
+
+  callback_query_command "repost" do
+    {:ok, conn} = StateManager.get_conn(update.callback_query.from.id)
+    [_command | id] = String.split(update.callback_query.data, " ")
+
+    res =
+      try do
+        Hunter.reblog(conn, id)
+        answer_callback_query(text: "Reposted")
+      rescue
+        err in Hunter.Error -> {:error, "#{inspect(err)}"};
+         Logger.log(:error, "Repost error: #{inspect(err)}");
+         answer_callback_query(text: "#{inspect(err.reason)}")
+      end
+  end
+
+  callback_query_command "like" do
+    {:ok, conn} = StateManager.get_conn(update.callback_query.from.id)
+    [_command | id] = String.split(update.callback_query.data, " ")
+
+    res =
+      try do
+        Hunter.favourite(conn, id)
+        answer_callback_query(text: "Liked")
+      rescue
+        err in Hunter.Error -> {:error, "#{inspect(err)}"};
+         Logger.log(:error, "Delete error: #{inspect(err)}");
+         answer_callback_query(text: "#{inspect(err.reason)}")
+      end
+  end
+
+  callback_query_command "unrepost" do
+    {:ok, conn} = StateManager.get_conn(update.callback_query.from.id)
+    [_command | id] = String.split(update.callback_query.data, " ")
+
+    res =
+      try do
+        Hunter.unreblog(conn, id)
+        answer_callback_query(text: "Unreposted")
+      rescue
+        err in Hunter.Error -> {:error, "#{inspect(err)}"};
+         Logger.log(:error, "Unrepost error: #{inspect(err)}");
+         answer_callback_query(text: "#{inspect(err.reason)}")
+      end
+  end
+
+  callback_query_command "unlike" do
+    {:ok, conn} = StateManager.get_conn(update.callback_query.from.id)
+    [_command | id] = String.split(update.callback_query.data, " ")
+
+    res =
+      try do
+        Hunter.unfavourite(conn, id)
+        answer_callback_query(text: "Unliked")
+      rescue
+        err in Hunter.Error -> {:error, "#{inspect(err)}"};
+         Logger.log(:error, "Delete error: #{inspect(err)}");
+         answer_callback_query(text: "Error #{inspect(err.reason)}")
+      end
   end
 
   command ["help"] do

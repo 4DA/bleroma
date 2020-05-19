@@ -194,10 +194,15 @@ defmodule Bleroma.Utils do
   end
 
   def post_from_template(acct, content, status_id,
-    reblogs_count, favourites_count, reply_count, html \\ true, reply_to \\ nil, parent \\ nil) do
+    reblogs_count, favourites_count, reply_count, html \\ true, reply_to \\ nil, parent \\ nil, media \\ nil, max_content_sz \\ 3900) do
 
     ito = if html == true do "<i>" else "" end
     itc = if html == true do "</i>" else "" end
+
+    media_str = if media do Enum.map(media,
+                    fn %Hunter.Attachment{description: desc,
+                             remote_url: url} -> "<a href=\"#{url}\">#{desc}</a>" end)
+                    else "" end
 
     reply_str = if reply_to do " → /" <> reply_to else "" end
     quote_str = if parent do
@@ -213,8 +218,9 @@ defmodule Bleroma.Utils do
     ""
     <> "#{acct}" <> "#{reply_str}" <> ":"
     <> quote_str
-    <> "\n#{content}\n"
-    <> "/#{status_id} ↶#{reply_count} 🗘#{reblogs_count} ☆#{favourites_count}"
+    <> "\n#{String.slice(content, 0, max_content_sz)}\n"
+    <> "#{media_str}"
+    <> "\n/#{status_id} ↶#{reply_count} 🗘#{reblogs_count} ☆#{favourites_count}"
   end
 
   defp status_reply_markup(st, conn) do
@@ -238,13 +244,15 @@ defmodule Bleroma.Utils do
           }
         ]
       else
+        repost_cmd = if st.reblogged, do: "/unrepost", else: "/repost"
+        like_cmd = if st.favourited, do: "/unlike", else: "/like"
         [
           %{
-            callback_data: "/repost #{st.id}",
+            callback_data: "#{repost_cmd} #{st.id}",
             text: "Repost"
           },
           %{
-            callback_data: "/like #{st.id}",
+            callback_data: "#{like_cmd} #{st.id}",
             text: "Like"
           }
         ]
@@ -288,20 +296,20 @@ defmodule Bleroma.Utils do
       # if send is failed, send message with plain parse mode
 
       if (Enum.count(st.media_attachments) > 0 and hd(st.media_attachments).type == "image") do
-        # file_path = get_file_from_pleroma(Enum.at(st.media_attachments, 0).remote_url)
+
         url = Enum.at(st.media_attachments, 0).remote_url
 
         content = HtmlSanitizeEx.strip_tags(st.content)
 
         string_to_send = post_from_template(
-          st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, 0, false, st.in_reply_to_id, parent)
+          st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, 0, false, st.in_reply_to_id, parent, tl(st.media_attachments), 900)
 
         opts = opts ++ [caption: string_to_send]
         Nadia.send_photo(tg_user_id, url, opts)
 
       else
         string_to_send = post_from_template(
-          st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, 0, false, st.in_reply_to_id, parent)
+          st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, 0, false, st.in_reply_to_id, parent, st.media_attachments, 3900)
 
         case Nadia.send_message(tg_user_id, string_to_send, opts_parse_mode) do
           {:error, _} -> Nadia.send_message(tg_user_id, string_to_send, opts)
