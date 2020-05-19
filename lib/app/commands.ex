@@ -18,8 +18,8 @@ defmodule App.Commands do
     # @TODO generate this link via api
     oauth_link = "https://birdity.club/oauth/authorize?client_id=FpWYvIh-founF77h7u06vN_bAyYDJVzARznVO-ZjKpc&response_type=code&redirect_uri=urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob&scope=read+write+follow"
 
-    "Visit [this link](#{oauth_link}) authenticate, and send me the code via /identify\n"
-    <> "\n/identify <token> :: login as user using oauth token\n"
+    "Visit [this link](#{oauth_link}) to authenticate, and send me code via /identify\n"
+    <> "\n/identify <token> - login as user using oauth token\n"
   end
 
   command ["help"] do

@@ -197,6 +197,8 @@ defmodule Bleroma.Utils do
   def post_from_template(acct, content, status_id,
     reblogs_count, favourites_count, reply_count, html \\ true, reply_to \\ nil, parent \\ nil, media \\ nil, max_content_sz \\ 3900) do
 
+    reply_count = "x"
+
     ito = if html == true do "<i>" else "" end
     itc = if html == true do "</i>" else "" end
 
