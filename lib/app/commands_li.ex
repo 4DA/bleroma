@@ -184,7 +184,7 @@ defmodule App.CommandsLI do
       try do
         status_id = Enum.at(String.split(update.message.text, "/"), 1)
         status = Hunter.status(conn, status_id)
-        post = Utils.show_post(status, tg_user_id, conn)
+        post = Utils.prepare_post(status, tg_user_id, conn)
         Utils.send_post_to_tg(tg_user_id, post)
       rescue err in Hunter.Error ->
           Nadia.send_message(tg_user_id, "Error fetching status #{err.reason}")

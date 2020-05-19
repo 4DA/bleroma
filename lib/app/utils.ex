@@ -177,7 +177,7 @@ defmodule Bleroma.Utils do
   def show_status_as_anon(status_str, tg_user_id) do
     status = Poison.decode!(status_str, as: status_nested_struct())
     Logger.log(:info, "show_status = #{inspect(status)}")
-    post = show_post(status, tg_user_id, nil)
+    post = prepare_post(status, tg_user_id, nil)
     send_post_to_tg(tg_user_id, post)
   end
 
@@ -185,7 +185,7 @@ defmodule Bleroma.Utils do
     status = Poison.decode!(notification, as: notification_nested_struct()).status
 
     Logger.log(:info, "show_notification = #{inspect(status)}")    
-    post = show_post(status, tg_user_id, conn)
+    post = prepare_post(status, tg_user_id, conn)
     send_post_to_tg(tg_user_id, post)
   end
 
@@ -272,7 +272,7 @@ defmodule Bleroma.Utils do
   end
   
 
-  def show_post(%Hunter.Status{} = st, tg_user_id, conn) do
+  def prepare_post(%Hunter.Status{} = st, tg_user_id, conn) do
     {:ok, conn} = StateManager.get_conn(tg_user_id)
     status_id = st.id
 
