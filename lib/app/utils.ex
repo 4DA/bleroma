@@ -177,20 +177,21 @@ defmodule Bleroma.Utils do
   def show_status_as_anon(status_str, tg_user_id) do
     status = Poison.decode!(status_str, as: status_nested_struct())
     Logger.log(:info, "show_status = #{inspect(status)}")
-    show_post(status, tg_user_id, nil)
+    post = show_post(status, tg_user_id, nil)
+    send_post_to_tg(tg_user_id, post)
   end
 
   def show_notification(notification, tg_user_id, conn) do
     status = Poison.decode!(notification, as: notification_nested_struct()).status
 
     Logger.log(:info, "show_notification = #{inspect(status)}")    
-    show_post(status, tg_user_id, conn)
+    post = show_post(status, tg_user_id, conn)
+    send_post_to_tg(tg_user_id, post)
   end
 
   def show_update(update, tg_user_id, conn) do
     status = Poison.decode!(update, as: status_nested_struct())
     Logger.log(:info, "ignored update = #{inspect(status)}")
-    # show_post(status, tg_user_id)
   end
 
   def post_from_template(acct, content, status_id,
@@ -199,9 +200,9 @@ defmodule Bleroma.Utils do
     ito = if html == true do "<i>" else "" end
     itc = if html == true do "</i>" else "" end
 
-    media_str = if media do Enum.map(media,
+    media_str = if media do ["\n"] ++ Enum.map(media,
                     fn %Hunter.Attachment{description: desc,
-                             remote_url: url} -> "<a href=\"#{url}\">#{desc}</a>" end)
+                             remote_url: url} -> "<a href=\"#{url}\">#{desc}</a>\n" end)
                     else "" end
 
     reply_str = if reply_to do " → /" <> reply_to else "" end
@@ -295,27 +296,42 @@ defmodule Bleroma.Utils do
       # https://core.telegram.org/bots/api#formatting-options
       # if send is failed, send message with plain parse mode
 
-      if (Enum.count(st.media_attachments) > 0 and hd(st.media_attachments).type == "image") do
+      if (Enum.count(st.media_attachments) == 1 and hd(st.media_attachments).type == "image") do
 
         url = Enum.at(st.media_attachments, 0).remote_url
 
         content = HtmlSanitizeEx.strip_tags(st.content)
 
         string_to_send = post_from_template(
-          st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, 0, false, st.in_reply_to_id, parent, tl(st.media_attachments), 900)
+          st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, 0, false, st.in_reply_to_id, parent, nil, 900)
 
         opts = opts ++ [caption: string_to_send]
-        Nadia.send_photo(tg_user_id, url, opts)
+        {:photo, url, opts}
+        # Nadia.send_photo(tg_user_id, url, opts)
 
       else
         string_to_send = post_from_template(
           st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, 0, false, st.in_reply_to_id, parent, st.media_attachments, 3900)
 
-        case Nadia.send_message(tg_user_id, string_to_send, opts_parse_mode) do
-          {:error, _} -> Nadia.send_message(tg_user_id, string_to_send, opts)
-          {:ok, _} ->  {:ok}
-        end
+        {:message, string_to_send, opts_parse_mode}
+
+        # case Nadia.send_message(tg_user_id, string_to_send, opts_parse_mode) do
+        #   {:error, _} -> Nadia.send_message(tg_user_id, string_to_send, opts)
+        #   {:ok, _} ->  {:ok}
+        # end
       end
   end
+
+  def send_post_to_tg(tg_user_id, {:message, string_to_send, opts_parse_mode}) do
+    case Nadia.send_message(tg_user_id, string_to_send, opts_parse_mode) do
+      {:error, _} -> Nadia.send_message(tg_user_id, "error")
+      {:ok, _} ->  {:ok}
+    end
+  end
+
+  def send_post_to_tg(tg_user_id, {:photo, url, opts}) do
+    Nadia.send_photo(tg_user_id, url, opts)
+  end
   
+
 end
