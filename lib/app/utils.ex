@@ -178,7 +178,7 @@ defmodule Bleroma.Utils do
     status = Poison.decode!(status_str, as: status_nested_struct())
     Logger.log(:info, "show_status = #{inspect(status)}")
     post = prepare_post(status, tg_user_id, nil)
-    send_post_to_tg(tg_user_id, post)
+    send_to_tg(tg_user_id, post)
   end
 
   def show_notification(notification, tg_user_id, conn) do
@@ -186,7 +186,7 @@ defmodule Bleroma.Utils do
 
     Logger.log(:info, "show_notification = #{inspect(status)}")    
     post = prepare_post(status, tg_user_id, conn)
-    send_post_to_tg(tg_user_id, post)
+    send_to_tg(tg_user_id, post)
   end
 
   def show_update(update, tg_user_id, conn) do
@@ -325,14 +325,14 @@ defmodule Bleroma.Utils do
       end
   end
 
-  def send_post_to_tg(tg_user_id, {:message, string_to_send, opts_parse_mode}) do
+  def send_to_tg(tg_user_id, {:message, string_to_send, opts_parse_mode}) do
     case Nadia.send_message(tg_user_id, string_to_send, opts_parse_mode) do
       {:error, _} -> Nadia.send_message(tg_user_id, "error")
       {:ok, _} ->  {:ok}
     end
   end
 
-  def send_post_to_tg(tg_user_id, {:photo, url, opts}) do
+  def send_to_tg(tg_user_id, {:photo, url, opts}) do
     Nadia.send_photo(tg_user_id, url, opts)
   end
 
