@@ -283,7 +283,14 @@ defmodule Bleroma.Utils do
 
     Logger.log(:info, "post = #{inspect(st)}")
 
-    content = st.content |> HtmlSanitizeEx.Scrubber.scrub(Bleroma.Scrubber.Tg)
+    Logger.log(:info, "st.content = #{st.content}")
+
+    content = st.content
+           |> String.replace("</p>", "</p>\n")
+           |> String.replace("<br>", "<br>\n")
+           |> HtmlSanitizeEx.Scrubber.scrub(Bleroma.Scrubber.Tg)
+
+    Logger.log(:info, "scr.content rr = #{content}")
 
     reply_markup = status_reply_markup(st, conn)
     
@@ -297,34 +304,24 @@ defmodule Bleroma.Utils do
         nil
       end
 
-      # telegram supports very small subset of html tags:
-      # https://core.telegram.org/bots/api#formatting-options
-      # if send is failed, send message with plain parse mode
+      # sendPhoto is too limiting, mb enable it later
 
-      if (Enum.count(st.media_attachments) == 1 and hd(st.media_attachments).type == "image") do
+      # if (Enum.count(st.media_attachments) == 1 and hd(st.media_attachments).type == "image") do
+      #   url = Enum.at(st.media_attachments, 0).remote_url
+      #   content = HtmlSanitizeEx.strip_tags(content)
 
-        url = Enum.at(st.media_attachments, 0).remote_url
+      #   string_to_send = post_from_template(
+      #     st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, 0, false, st.in_reply_to_id, parent, nil, 900)
 
-        content = HtmlSanitizeEx.strip_tags(st.content)
+      #   opts = opts ++ [caption: string_to_send]
+      #   {:photo, url, opts}
+      #   # Nadia.send_photo(tg_user_id, url, opts)
+      #  end
 
-        string_to_send = post_from_template(
-          st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, 0, false, st.in_reply_to_id, parent, nil, 900)
+      string_to_send = post_from_template( # 
+        st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, 0, false, st.in_reply_to_id, parent, st.media_attachments, 3900)
 
-        opts = opts ++ [caption: string_to_send]
-        {:photo, url, opts}
-        # Nadia.send_photo(tg_user_id, url, opts)
-
-      else
-        string_to_send = post_from_template(
-          st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, 0, false, st.in_reply_to_id, parent, st.media_attachments, 3900)
-
-        {:message, string_to_send, opts_parse_mode}
-
-        # case Nadia.send_message(tg_user_id, string_to_send, opts_parse_mode) do
-        #   {:error, _} -> Nadia.send_message(tg_user_id, string_to_send, opts)
-        #   {:ok, _} ->  {:ok}
-        # end
-      end
+      {:message, string_to_send, opts_parse_mode}
   end
 
   def send_to_tg(tg_user_id, {:message, string_to_send, opts_parse_mode}) do
