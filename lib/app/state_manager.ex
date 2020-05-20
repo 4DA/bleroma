@@ -4,7 +4,7 @@ defmodule StateManager do
   require Bleroma.Utils
   alias Bleroma.Utils
 
-  defstruct app: nil, storage: nil, conns: %{}
+  defstruct app: nil, storage: nil, conns: %{}, websocks: %{}
 
   # server
   # -------------------------------------------------------------------------
@@ -29,7 +29,14 @@ defmodule StateManager do
 
     Logger.log(:info, "All conns: #{inspect(conns)}")    
 
-    {:ok, %StateManager{app: app, storage: storage, conns: conns}} # 
+    websocks = Map.new(all_bearers, fn [tg, bearer] ->
+      {:ok, pid} = Bleroma.Websocks.start({tg, Map.get(conns, tg)})
+      {tg, pid}
+    end)
+
+    Logger.log(:info, "All WS: #{inspect(websocks)}")
+
+    {:ok, %StateManager{app: app, storage: storage, conns: conns, websocks: websocks}} # 
   end
 
   @impl true
@@ -42,18 +49,27 @@ defmodule StateManager do
 
   @impl true
   def handle_call({:add_user, tg_user_id, conn}, _from, state) do
-    
     Storage.store_auth(state.storage, tg_user_id, conn.bearer_token)
+
+    {:ok, pid} = Bleroma.Websocks.start({tg_user_id, conn})
+
     {:reply, :ok,
-     %StateManager{state | conns: Map.put(state.conns, tg_user_id, conn)}}
+     %StateManager{state | conns: Map.put(state.conns, tg_user_id, conn),
+                   websocks: Map.put(state.websocks, tg_user_id, pid)}}
   end
 
   @impl true
   def handle_call({:delete_user, tg_user_id}, _from, state) do
     Storage.delete_auth(state.storage, tg_user_id)
+
+    pid = Map.get(state.websocks, tg_user_id)
+    Process.exit(pid, :kill)
+    Logger.log(:info, "Removed ws pid #{inspect(pid)}")
+
     Map
     {:reply, :ok,
-     %StateManager{state | conns: Map.delete(state.conns, tg_user_id)}}
+     %StateManager{state | conns: Map.delete(state.conns, tg_user_id),
+                   websocks: Map.delete(state.websocks, tg_user_id)}}
   end
 
   @impl true

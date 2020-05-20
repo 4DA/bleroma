@@ -24,8 +24,7 @@ defmodule App do
     children = [
       worker(Bleroma.Poller, []),
       worker(Bleroma.Matcher, []),
-      worker(StateManager, []),
-      worker(Bleroma.WSManager, [])
+      worker(StateManager, [])
     ]
 
     opts = [strategy: :one_for_one, name: Bleroma.Supervisor]
