@@ -207,6 +207,10 @@ defmodule Bleroma.Utils do
                              remote_url: url} -> "<a href=\"#{url}\">#{desc}</a>\n" end)
                     else "" end
 
+    content = if content != nil and String.length(content) > 0,
+      do: "\n" <> String.slice(content, 0, max_content_sz) <> "\n",
+      else: ""
+
     reply_str = if reply_to do " → /" <> reply_to else "" end
     quote_str = if parent do
       if String.length(String.trim(parent)) > 80
@@ -221,8 +225,8 @@ defmodule Bleroma.Utils do
     ""
     <> "#{acct}" <> "#{reply_str}" <> ":"
     <> quote_str
-    <> "\n#{String.slice(content, 0, max_content_sz)}\n"
     <> "#{media_str}"
+    <> "#{content}"
     <> "\n/#{status_id} ↶#{reply_count} 🗘#{reblogs_count} ☆#{favourites_count}"
   end
 
@@ -281,28 +285,22 @@ defmodule Bleroma.Utils do
     {:ok, conn} = StateManager.get_conn(tg_user_id)
     status_id = st.id
 
-    Logger.log(:info, "post = #{inspect(st)}")
-
-    Logger.log(:info, "st.content = #{st.content}")
-
     content = st.content
            |> String.replace("</p>", "</p>\n")
            |> String.replace("<br>", "<br>\n")
            |> HtmlSanitizeEx.Scrubber.scrub(Bleroma.Scrubber.Tg)
 
-    Logger.log(:info, "scr.content rr = #{content}")
-
     reply_markup = status_reply_markup(st, conn)
     
-      opts = [reply_markup: reply_markup]
+    opts = [reply_markup: reply_markup]
 
-      opts_parse_mode = opts ++ [{:parse_mode, "HTML"}]
+    opts_parse_mode = opts ++ [{:parse_mode, "HTML"}]
 
-      parent = if (st.in_reply_to_id) do
-        HtmlSanitizeEx.strip_tags(Hunter.status(conn, st.in_reply_to_id).content)
-      else
-        nil
-      end
+    parent = if (st.in_reply_to_id) do
+      HtmlSanitizeEx.strip_tags(Hunter.status(conn, st.in_reply_to_id).content)
+    else
+      nil
+    end
 
       # sendPhoto is too limiting, mb enable it later
 
@@ -318,10 +316,10 @@ defmodule Bleroma.Utils do
       #   # Nadia.send_photo(tg_user_id, url, opts)
       #  end
 
-      string_to_send = post_from_template( # 
-        st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, 0, false, st.in_reply_to_id, parent, st.media_attachments, 3900)
+    string_to_send = post_from_template( # 
+      st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, 0, false, st.in_reply_to_id, parent, st.media_attachments, 3900)
 
-      {:message, string_to_send, opts_parse_mode}
+    {:message, string_to_send, opts_parse_mode}
   end
 
   def send_to_tg(tg_user_id, {:message, string_to_send, opts_parse_mode}) do
