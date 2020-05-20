@@ -116,7 +116,7 @@ defmodule Bleroma.Utils do
     fname
   end
 
-  def make_post(update, params \\ [visibility: "private"]) do
+  def make_post(update, params \\ [visibility: "public"]) do
     {:ok, conn} = get_conn(update)
     user_id = update.message.from.id
 
