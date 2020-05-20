@@ -120,43 +120,8 @@ defmodule Bleroma.CommandsLI do
     StateManager.delete_user(update.message.from.id)
   end
 
-  # command ["identify"] do
-    # [_command | args] = String.split(update.message.text, " ")
-
-    # # send_message("Your arguments were: " <> Enum.join(args, " "))
-
-    # token = Enum.at(args, 0)
-    # user_id = update.message.from.id
-    # username = update.message.from.username
-
-    # # send_message("User id: " <> user_id <> " token: " <> token)
-    # Logger.log(:info, "/identify from [id=#{user_id} name=#{username} oauth=#{token}]")
-
-    # # verify creds
-    # base_instance = Application.get_env(:app, :instance_url)
-
-    # conn = Bleroma.Utils.login_user(user_id, username, token, state)
-    # case conn do
-    #   {:ok, _, account} -> send_message("You have been authenticated as #{account.acct}")
-    #   {:error, reason} -> send_message("Authentication error")
-    # end
-  # end
-
-
-  callback_query_command "choose" do
-    Logger.log(:info, "Callback Query Command /choose")
-
-    case update.callback_query.data do
-      "/choose joseph" ->
-        answer_callback_query(text: "Indeed you have good taste.")
-
-      "/choose joseph-of-course" ->
-        answer_callback_query(text: "I can't agree more.")
-    end
-  end
-
-
   # Fallbacks
+  # ----------------------------------------------------------------------------
 
   callback_query do
     Logger.log(:warn, "Did not match any callback query")
