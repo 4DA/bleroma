@@ -3,8 +3,8 @@
 defmodule Bleroma.Matcher do
   use GenServer
 
-  alias Bleroma.Commands
-  alias Bleroma.CommandsLI
+  alias Bleroma.CmdAnon
+  alias Bleroma.Cmd
   import Storage
   import Bleroma.Utils
   alias Bleroma.Utils
@@ -70,8 +70,8 @@ defmodule Bleroma.Matcher do
     Logger.log(:info, "recv msg: #{inspect(update)}")
     
     case Utils.get_conn(update) do
-      {:ok, conn} -> CommandsLI.match_message(update, state)
-      :error -> state = Commands.match_message(update, state)
+      {:ok, conn} -> Cmd.match_message(update, state)
+      :error -> state = CmdAnon.match_message(update, state)
     end
 
     {:noreply, state}

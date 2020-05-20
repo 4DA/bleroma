@@ -1,26 +1,25 @@
 # module for commands for logged in users
-defmodule Bleroma.CommandsLI do
-  use Bleroma.Router
-  use Bleroma.Commander
+defmodule Bleroma.Cmd do
   require Hunter
   require Bleroma.Utils
   alias Bleroma.Utils
 
-  alias Bleroma.Commands.Outside
+  use Bleroma.Router
+  use Bleroma.Commander
 
-  command ["notifications"] do
-    # try do
-      {:ok, conn} = StateManager.get_conn(update.message.from.id)
-      Logger.log(:info, "notconn: #{inspect(conn)}")
-      status = Hunter.notifications(conn)
+  # command ["notifications"] do
+  #   # try do
+  #     {:ok, conn} = StateManager.get_conn(update.message.from.id)
+  #     Logger.log(:info, "notconn: #{inspect(conn)}")
+  #     status = Hunter.notifications(conn)
 
-      Logger.log(:info, "notifications: #{inspect(status)}")
+  #     Logger.log(:info, "notifications: #{inspect(status)}")
 
-      send_message("Your notifications:")
-    # rescue
-      # err in Hunter.Error -> Log.log(:error, "hunter error: #{err}")
-    # end
-  end
+  #     send_message("Your notifications:")
+  #   # rescue
+  #     # err in Hunter.Error -> Log.log(:error, "hunter error: #{err}")
+  #   # end
+  # end
 
   callback_query_command "del" do
     {:ok, conn} = StateManager.get_conn(update.callback_query.from.id)
@@ -109,7 +108,7 @@ defmodule Bleroma.CommandsLI do
     oauth_link = "https://birdity.club/oauth/authorize?client_id=FpWYvIh-founF77h7u06vN_bAyYDJVzARznVO-ZjKpc&response_type=code&redirect_uri=urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob&scope=read+write+follow"
 
     send_message(
-      "/identify <token> - log in using [oauth token](#{oauth_link})\n"
+      ""
       <> "/logout - log out\n"
       <> "/help - show this message",
       [{:parse_mode, "markdown"}])
