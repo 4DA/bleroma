@@ -25,7 +25,7 @@ defmodule Bleroma.Cmd do
     {:ok, conn} = StateManager.get_conn(update.callback_query.from.id)
     [_command | id] = String.split(update.callback_query.data, " ")
 
-    res = try do
+    try do
       Hunter.destroy_status(conn, id)
       answer_callback_query(text: "Done")
     rescue
@@ -39,7 +39,6 @@ defmodule Bleroma.Cmd do
     {:ok, conn} = StateManager.get_conn(update.callback_query.from.id)
     [_command | st_id] = String.split(update.callback_query.data, " ")
 
-    res =
       try do
         Hunter.reblog(conn, st_id)
         answer_callback_query(text: "Reposted")
@@ -55,7 +54,6 @@ defmodule Bleroma.Cmd do
     {:ok, conn} = StateManager.get_conn(update.callback_query.from.id)
     [_command | st_id] = String.split(update.callback_query.data, " ")
 
-    res =
       try do
         Hunter.unreblog(conn, st_id)
         answer_callback_query(text: "Unreposted")
@@ -72,7 +70,6 @@ defmodule Bleroma.Cmd do
     {:ok, conn} = StateManager.get_conn(update.callback_query.from.id)
     [_command | st_id] = String.split(update.callback_query.data, " ")
 
-    res =
       try do
         Hunter.favourite(conn, st_id)
         answer_callback_query(text: "Liked")
@@ -90,7 +87,6 @@ defmodule Bleroma.Cmd do
     {:ok, conn} = StateManager.get_conn(update.callback_query.from.id)
     [_command | st_id] = String.split(update.callback_query.data, " ")
 
-    res =
       try do
         Hunter.unfavourite(conn, st_id)
         answer_callback_query(text: "Unliked")
@@ -105,8 +101,6 @@ defmodule Bleroma.Cmd do
   end
 
   command ["help"] do
-    oauth_link = "https://birdity.club/oauth/authorize?client_id=FpWYvIh-founF77h7u06vN_bAyYDJVzARznVO-ZjKpc&response_type=code&redirect_uri=urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob&scope=read+write+follow"
-
     send_message(
       ""
       <> "/logout - log out\n"

@@ -4,7 +4,7 @@ defmodule Bleroma.Websocks do
   require Bleroma.Matcher
   require Poison
 
-  def start_link({tg_id, conn} = state) do
+  def start_link({tg_id, conn}) do
     ws_url = Application.get_env(:app, :websocket_url)
     access_token = conn.bearer_token
 
@@ -43,7 +43,8 @@ defmodule Bleroma.Websocks do
       if (String.length(msg) > 0) do
         Bleroma.Matcher.match({:masto, tg_id, Poison.decode!(msg), conn})
       end
-    rescue err in Poison.Parse.Error -> Logger.error("Error decoding message from masto: #{msg}")
+    rescue err in Poison.Parse.Error ->
+        Logger.error("Error decoding message from masto: #{msg}: #{inspect(err)}")
     end
 
     {:ok, state}

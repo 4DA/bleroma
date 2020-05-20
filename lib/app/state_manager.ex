@@ -24,9 +24,6 @@ defmodule StateManager do
 
     Logger.log(:info, "All bearers: #{inspect(all_bearers)}")    
 
-    conns = Enum.map(all_bearers, fn [tg, bearer] ->
-      Utils.new_connection(tg, bearer) end)
-
     conns = Map.new(all_bearers, fn [tg, bearer] ->
       {tg, Utils.new_connection(tg, bearer)} end)
 

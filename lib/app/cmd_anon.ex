@@ -1,4 +1,4 @@
-defmodule Bleroma.Commands do
+defmodule Bleroma.CmdAnon do
   use Bleroma.Router
   use Bleroma.Commander
   require Hunter
@@ -15,12 +15,12 @@ defmodule Bleroma.Commands do
 
   def getHelpStringAnon() do
     # @TODO generate this link via api
-    register_link = "https://birdity.club/registration"
+    register_link = Application.get_env(:app, :register_link)
     oauth_link = "https://birdity.club/oauth/authorize?client_id=FpWYvIh-founF77h7u06vN_bAyYDJVzARznVO-ZjKpc&response_type=code&redirect_uri=urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob&scope=read+write+follow"
 
     ""
     <> "Visit [this link](#{oauth_link}) to authenticate, and send me code via /identify\n"
-    <> "If you don't have account, register [here](https://birdity.club/registration)"
+    <> "If you don't have account, register [here](#{register_link})"
     <> "\n/identify <token> - login as user using oauth token\n"
   end
 
@@ -48,7 +48,7 @@ defmodule Bleroma.Commands do
     conn = Bleroma.Utils.login_user(user_id, username, token, state)
     case conn do
       {:ok, _, account} -> send_message("You have been authenticated as #{account.acct}")
-      {:error, reason} -> send_message("Authentication error")
+      {:error, reason} -> send_message("Authentication error: #{inspect(reason)}")
     end
   end
 
