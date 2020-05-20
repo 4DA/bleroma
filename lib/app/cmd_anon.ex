@@ -5,14 +5,6 @@ defmodule Bleroma.CmdAnon do
   require Bleroma.Utils
   alias Bleroma.Utils
 
-  # You can create commands in the format `/command` by
-  # using the macro `command "command"`.
-  command "start" do
-    Logger.log(:info, "Command /start received")
-    send_message "Hello, " <> update.message.from.username
-  end
-
-
   def getHelpStringAnon() do
     # @TODO generate this link via api
     register_link = Application.get_env(:app, :register_link)
