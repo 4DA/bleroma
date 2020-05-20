@@ -288,6 +288,7 @@ defmodule Bleroma.Utils do
     content = st.content
            |> String.replace("</p>", "</p>\n")
            |> String.replace("<br>", "<br>\n")
+           |> String.replace("<br/>", "<br/>\n")
            |> HtmlSanitizeEx.Scrubber.scrub(Bleroma.Scrubber.Tg)
 
     reply_markup = status_reply_markup(st, conn)

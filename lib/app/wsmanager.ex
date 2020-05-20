@@ -15,13 +15,13 @@ defmodule Bleroma.WSManager do
   # Server
   # ----------------------------------------------------------------------------
 
-  def start_link(matcher) do
-    GenServer.start_link(__MODULE__, matcher, name: __MODULE__)
+  def start_link() do
+    GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
   @impl true
-  def init(matcher) do
-    Logger.log(:info, "Started WSM | matcher pid = #{inspect(matcher)}")
+  def init(:ok) do
+    Logger.log(:info, "Started WSM")
     app = Hunter.Application.load_credentials("bleroma")
     Logger.log(:info, "Loaded application #{inspect(app)}")
 
@@ -29,11 +29,7 @@ defmodule Bleroma.WSManager do
     all_bearers = Storage.get_all(storage)
     websocks = Enum.map(all_bearers, fn [tg, bearer] ->
       {:ok, conn} = StateManager.get_conn(tg); 
-      Bleroma.Websocks.start_link(
-        {tg,
-         # Utils.new_connection(tg, bearer),
-         conn,
-         matcher})
+      Bleroma.Websocks.start_link({tg, conn})
     end)
 
     {:ok, %{app: app, storage: storage, websocks: websocks}}
@@ -41,22 +37,6 @@ defmodule Bleroma.WSManager do
 
   @impl true
   def handle_cast(update, state) do
-    # # Logger.log(:info, "recv msg: #{inspect(update)}")
-
-    
-    # {conn, state} = Utils.get_conn(update, state)
-    # # Logger.log(:info, "home timeline: #{inspect(Hunter.home_timeline(conn))})")    
-
-    # Logger.log(:info, "bearer: #{inspect(conn.bearer_token)}")
-    # # user is not authenticated
-    # if conn == nil do
-    #   state = Commands.match_message(update, state)
-    # else
-    #   state = CommandsLI.match_message(update, state)
-    # end
-
-    
-
     {:noreply, state}
   end
 

@@ -25,19 +25,10 @@ defmodule App do
       worker(Bleroma.Poller, []),
       worker(Bleroma.Matcher, []),
       worker(StateManager, []),
+      worker(Bleroma.WSManager, [])
     ]
 
     opts = [strategy: :one_for_one, name: Bleroma.Supervisor]
-    {:ok, sv_pid} = Supervisor.start_link(children, opts)
-
-    {_, matcher_pid, _, _} = List.keyfind(Supervisor.which_children(sv_pid), Bleroma.Matcher, 0)
-    Logger.log(:info, "sv: #{inspect(sv_pid)} | children: #{inspect(Supervisor.which_children(sv_pid))}")
-    
-    wsm = Supervisor.start_child(sv_pid,
-      %{id: Bleroma.WSManager,
-        start: {Bleroma.WSManager, :start_link, [matcher_pid]}
-      })
-
-    {:ok, sv_pid}
+    Supervisor.start_link(children, opts)
   end
 end

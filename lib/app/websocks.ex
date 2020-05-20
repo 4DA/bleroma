@@ -4,12 +4,12 @@ defmodule Bleroma.Websocks do
   require Bleroma.Matcher
   require Poison
 
-  def start_link({tg_id, conn, matcher} = state) do
+  def start_link({tg_id, conn} = state) do
     ws_url = Application.get_env(:app, :websocket_url)
     access_token = conn.bearer_token
 
     WebSockex.start_link("#{ws_url}?access_token=#{conn.bearer_token}&stream=user",
-      __MODULE__, {tg_id, conn, matcher}, ssl_options: [
+      __MODULE__, {tg_id, conn}, ssl_options: [
         ciphers: :ssl.cipher_suites() ++ [{:rsa, :aes_128_cbc, :sha}]
       ])
 
@@ -38,7 +38,7 @@ defmodule Bleroma.Websocks do
   #   {:close, state}
   # end
 
-  def handle_frame({:text, msg}, {tg_id, conn, matcher} = state) do
+  def handle_frame({:text, msg}, {tg_id, conn} = state) do
     try do
       if (String.length(msg) > 0) do
         Bleroma.Matcher.match({:masto, tg_id, Poison.decode!(msg), conn})
