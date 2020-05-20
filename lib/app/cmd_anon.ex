@@ -16,7 +16,7 @@ defmodule Bleroma.CmdAnon do
     <> "\n/identify <token> - login as user using oauth token\n"
   end
 
-  command ["start, help"] do
+  command ["start", "help"] do
     send_message(
       getHelpStringAnon(),
       [{:parse_mode, "markdown"}])
