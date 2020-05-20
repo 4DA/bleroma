@@ -1,4 +1,15 @@
+## Features
+- Sending messages
+- Sending photos
+- Receiving notifications from user subscriptions
+
 ## Configuration
+Create bleroma.json
+```
+iex -S mix
+
+```
+
 ```
 config :app,
   bot_name: "XXX_bot",
