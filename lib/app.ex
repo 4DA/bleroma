@@ -22,20 +22,20 @@ defmodule App do
     Application.ensure_all_started(:websockex)
 
     children = [
-      worker(App.Poller, []),
-      worker(App.Matcher, []),
+      worker(Bleroma.Poller, []),
+      worker(Bleroma.Matcher, []),
       worker(StateManager, []),
     ]
 
-    opts = [strategy: :one_for_one, name: App.Supervisor]
+    opts = [strategy: :one_for_one, name: Bleroma.Supervisor]
     {:ok, sv_pid} = Supervisor.start_link(children, opts)
 
-    {_, matcher_pid, _, _} = List.keyfind(Supervisor.which_children(sv_pid), App.Matcher, 0)
+    {_, matcher_pid, _, _} = List.keyfind(Supervisor.which_children(sv_pid), Bleroma.Matcher, 0)
     Logger.log(:info, "sv: #{inspect(sv_pid)} | children: #{inspect(Supervisor.which_children(sv_pid))}")
     
     wsm = Supervisor.start_child(sv_pid,
-      %{id: App.WSManager,
-        start: {App.WSManager, :start_link, [matcher_pid]}
+      %{id: Bleroma.WSManager,
+        start: {Bleroma.WSManager, :start_link, [matcher_pid]}
       })
 
     {:ok, sv_pid}

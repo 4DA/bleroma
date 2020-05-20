@@ -1,10 +1,10 @@
-defmodule App.Commands do
-  use App.Router
-  use App.Commander
+defmodule Bleroma.Commands do
+  use Bleroma.Router
+  use Bleroma.Commander
   require Hunter
   require Bleroma.Utils
   alias Bleroma.Utils
-  alias App.Commands.Outside
+  alias Bleroma.Commands.Outside
 
   # You can create commands in the format `/command` by
   # using the macro `command "command"`.
@@ -51,14 +51,14 @@ defmodule App.Commands do
   end
 
   command ["hello", "hi"] do
-    # Logger module injected from App.Commander
+    # Logger module injected from Bleroma.Commander
     Logger.log(:info, "Command /hello or /hi")
 
     # You can use almost any function from the Nadia core without
     # having to specify the current chat ID as you can see below.
     # For example, `Nadia.send_message/3` takes as first argument
     # the ID of the chat you want to send this message. Using the
-    # macro `send_message/2` defined at App.Commander, it is
+    # macro `send_message/2` defined at Bleroma.Commander, it is
     # injected the proper ID at the function. Go take a look.
     #
     # See also: https://hexdocs.pm/nadia/Nadia.html
@@ -75,7 +75,7 @@ defmodule App.Commands do
 
     {:ok, _} =
       send_message("What's the best JoJo?",
-        # Nadia.Model is aliased from App.Commander
+        # Nadia.Model is aliased from Bleroma.Commander
         #
         # See also: https://hexdocs.pm/nadia/Nadia.Model.InlineKeyboardMarkup.html
         reply_markup: %Model.InlineKeyboardMarkup{
@@ -165,7 +165,7 @@ defmodule App.Commands do
   # `message` and handles the current case of the Nadia method you're trying to
   # use.
   #
-  # If you search for `defmacro send_message` at App.Commander, you'll see an
+  # If you search for `defmacro send_message` at Bleroma.Commander, you'll see an
   # example of what I'm talking about. It just works! It basically means:
   # When you are with a callback query message, when you use `send_message` it
   # will know exatcly where to find it's chat ID. Same goes for the other kinds.

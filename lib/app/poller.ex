@@ -1,6 +1,6 @@
-# Poller receives responses from Telegram and sends them to App.Matcher
+# Poller receives responses from Telegram and sends them to Bleroma.Matcher
 
-defmodule App.Poller do
+defmodule Bleroma.Poller do
   use GenServer
   require Logger
 
@@ -72,7 +72,7 @@ defmodule App.Poller do
 
   defp process_message(message) do
     try do
-      App.Matcher.match(message)
+      Bleroma.Matcher.match(message)
     rescue
       err in MatchError ->
         Logger.log(:warn, "Errored with #{err} at #{Poison.encode!(message)}")

@@ -1,10 +1,10 @@
 # WSManager determines the type of update and allows us to write the processing of any type we need in the commands.ex
 
-defmodule App.WSManager do
+defmodule Bleroma.WSManager do
   use GenServer
 
-  alias App.Commands
-  alias App.CommandsLI
+  alias Bleroma.Commands
+  alias Bleroma.CommandsLI
   require Logger
 
   import Storage

@@ -1,10 +1,10 @@
 # Matcher determines the type of update and allows us to write the processing of any type we need in the commands.ex
 
-defmodule App.Matcher do
+defmodule Bleroma.Matcher do
   use GenServer
 
-  alias App.Commands
-  alias App.CommandsLI
+  alias Bleroma.Commands
+  alias Bleroma.CommandsLI
   import Storage
   import Bleroma.Utils
   alias Bleroma.Utils

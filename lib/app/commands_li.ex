@@ -1,12 +1,12 @@
 # module for commands for logged in users
-defmodule App.CommandsLI do
-  use App.Router
-  use App.Commander
+defmodule Bleroma.CommandsLI do
+  use Bleroma.Router
+  use Bleroma.Commander
   require Hunter
   require Bleroma.Utils
   alias Bleroma.Utils
 
-  alias App.Commands.Outside
+  alias Bleroma.Commands.Outside
 
   command ["notifications"] do
     # try do

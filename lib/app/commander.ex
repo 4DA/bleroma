@@ -1,4 +1,4 @@
-defmodule App.Commander do
+defmodule Bleroma.Commander do
   @bot_name Application.get_env(:app, :bot_name)
 
   # Code injectors
@@ -6,7 +6,7 @@ defmodule App.Commander do
   defmacro __using__(_opts) do
     quote do
       require Logger
-      import App.Commander
+      import Bleroma.Commander
       alias Nadia.Model
       alias Nadia.Model.InlineQueryResult
     end

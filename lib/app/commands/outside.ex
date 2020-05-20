@@ -1,9 +1,9 @@
-defmodule App.Commands.Outside do
+defmodule Bleroma.Commands.Outside do
   # Notice that here we just `use` Commander. Router is only
   # used to map commands to actions. It's best to keep routing
-  # only in App.Commands file. Commander gives us helpful
+  # only in Bleroma.Commands file. Commander gives us helpful
   # macros to deal with Nadia functions.
-  use App.Commander
+  use Bleroma.Commander
 
   # Functions must have as first parameter a variable named
   # update. Otherwise, macros (like `send_message`) will not

@@ -1,7 +1,7 @@
 defmodule Bleroma.Websocks do
   use WebSockex
   require Logger
-  require App.Matcher
+  require Bleroma.Matcher
   require Poison
 
   def start_link({tg_id, conn, matcher} = state) do
@@ -41,7 +41,7 @@ defmodule Bleroma.Websocks do
   def handle_frame({:text, msg}, {tg_id, conn, matcher} = state) do
     try do
       if (String.length(msg) > 0) do
-        App.Matcher.match({:masto, tg_id, Poison.decode!(msg), conn})
+        Bleroma.Matcher.match({:masto, tg_id, Poison.decode!(msg), conn})
       end
     rescue err in Poison.Parse.Error -> Logger.error("Error decoding message from masto: #{msg}")
     end

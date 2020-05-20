@@ -1,4 +1,4 @@
-defmodule App.Router do
+defmodule Bleroma.Router do
   @bot_name Application.get_env(:app, :bot_name)
 
   # Code injectors
@@ -6,7 +6,7 @@ defmodule App.Router do
   defmacro __using__(_opts) do
     quote do
       require Logger
-      import App.Router
+      import Bleroma.Router
 
       def match_message(message, state) do
         apply(__MODULE__, :do_match_message, [message, state])
