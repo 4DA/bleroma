@@ -122,13 +122,15 @@ defmodule Bleroma.Utils do
     user_id = update.message.from.id
 
     params = params ++
-      if (Enum.count(update.message.photo) > 0 or update.message.document) do
+    if (Enum.count(update.message.photo) > 0 or
+      update.message.document != nil or update.message.audio != nil) do
 
-        file_id = case {update.message.photo, update.message.document} do
-                    {[s1], _} -> s1.file_id
-                    {[s1, s2], _} -> s2.file_id
-                    {[s1, s2 | _], _} -> s2.file_id
-                    {_, %Nadia.Model.Document{file_id: id}} -> id
+        file_id = case {update.message.photo, update.message.document, update.message.audio} do
+                    {[s1], _, _} -> s1.file_id
+                    {[s1, s2], _, _} -> s2.file_id
+                    {[s1, s2 | _], _, _} -> s2.file_id
+                    {_, %Nadia.Model.Document{file_id: id}, _} -> id
+                    {_, _, %Nadia.Model.Audio{file_id: id}} -> id
                   end
         
       file_path = get_file_from_tg(update.message.from.id, file_id)
