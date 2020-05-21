@@ -81,6 +81,7 @@ defmodule Bleroma.Utils do
     }
   end
 
+  # make status that is a reply
   def make_post(
     %Nadia.Model.Update {
       message: %{reply_to_message: %{from: %{username: bleroma_bot_id}} = rmsg}
@@ -121,21 +122,25 @@ defmodule Bleroma.Utils do
     user_id = update.message.from.id
 
     params = params ++
-    if (Enum.count(update.message.photo) > 0) do
-      # TODO determine (how?) which photosize to use
-      photo_idx = if Enum.count(update.message.photo) > 1 do 1 else 0 end
+      if (Enum.count(update.message.photo) > 0 or update.message.document) do
+
+        file_id = case {update.message.photo, update.message.document} do
+                    {[s1], _} -> s1.file_id
+                    {[s1, s2], _} -> s2.file_id
+                    {[s1, s2 | _], _} -> s2.file_id
+                    {_, %Nadia.Model.Document{file_id: id}} -> id
+                  end
         
-      file_path = get_file_from_tg(update.message.from.id,
-        Enum.at(update.message.photo, photo_idx).file_id)
+      file_path = get_file_from_tg(update.message.from.id, file_id)
 
       media = Hunter.upload_media(conn, file_path)
 
       File.rm(file_path)
 
       [media_ids: [media.id]]
-    else
-      []
-    end
+
+      else []
+      end
 
     status_text = case {update.message.text, update.message.caption} do
       {nil, nil} -> ""
@@ -222,12 +227,15 @@ defmodule Bleroma.Utils do
     else
       "" end
 
+    # todo: add after implementing pleroma extension
+    # ↺#{reply_count}
+
     ""
     <> "#{acct}" <> "#{reply_str}" <> ":"
     <> quote_str
     <> "#{media_str}"
     <> "#{content}"
-    <> "\n/#{status_id} ↶#{reply_count} 🗘#{reblogs_count} ☆#{favourites_count}"
+    <> "\n/#{status_id} 🔁#{reblogs_count} ☆#{favourites_count}"
   end
 
   def status_reply_markup(st, conn) do
