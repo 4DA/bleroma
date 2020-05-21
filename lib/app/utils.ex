@@ -235,7 +235,7 @@ defmodule Bleroma.Utils do
     <> quote_str
     <> "#{media_str}"
     <> "#{content}"
-    <> "\n/#{status_id} 🔁#{reblogs_count} ☆#{favourites_count}"
+    <> "\n/#{status_id} 🔁#{reblogs_count} ⭐#{favourites_count}"
   end
 
   def status_reply_markup(st, conn) do
