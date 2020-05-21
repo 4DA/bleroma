@@ -191,14 +191,16 @@ defmodule Bleroma.Utils do
   def show_notification(notification, tg_user_id, conn) do
     status = Poison.decode!(notification, as: notification_nested_struct()).status
 
-    Logger.log(:info, "show_notification = #{inspect(status)}")    
-    post = prepare_post(status, tg_user_id, conn)
-    send_to_tg(tg_user_id, post)
+    Logger.log(:info, "ignored_notification = #{inspect(status)}")    
+    # post = prepare_post(status, tg_user_id, conn)
+    # send_to_tg(tg_user_id, post)
   end
 
   def show_update(update, tg_user_id, conn) do
     status = Poison.decode!(update, as: status_nested_struct())
-    Logger.log(:info, "ignored update = #{inspect(status)}")
+    Logger.log(:info, "posting update = #{inspect(status)}")
+    post = prepare_post(status, tg_user_id, conn)
+    send_to_tg(tg_user_id, post)
   end
 
   def post_from_template(acct, content, status_id,
