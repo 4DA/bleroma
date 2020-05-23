@@ -349,8 +349,12 @@ defmodule Bleroma.Utils do
 
     Logger.log(:info, "showing st: #{inspect(st)}")
 
+    {reblogs_count, favourites_count} = if st.reblog,
+      do: {st.reblog.reblogs_count, st.reblog.favourites_count},
+      else: {st.reblogs_count, st.favourites_count}
+
     string_to_send = post_from_template( # 
-      st.account.acct, content, st.id, st.reblog, st.reblogs_count, st.favourites_count, 0, true, st.in_reply_to_id, parent, st.media_attachments, 3900)
+      st.account.acct, content, st.id, st.reblog, reblogs_count, favourites_count, 0, true, st.in_reply_to_id, parent, st.media_attachments, 3900)
 
     Logger.log(:info, "tg msg: #{string_to_send}")
 
