@@ -333,7 +333,7 @@ defmodule Bleroma.Utils do
       #  end
 
     string_to_send = post_from_template( # 
-      st.account.acct, content, st.id, st.reblog, st.reblogs_count, st.favourites_count, 0, false, st.in_reply_to_id, parent, st.media_attachments, 3900)
+      st.account.acct, content, st.id, st.reblog, st.reblogs_count, st.favourites_count, 0, true, st.in_reply_to_id, parent, st.media_attachments, 3900)
 
     {:message, string_to_send, opts_parse_mode}
   end
