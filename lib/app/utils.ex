@@ -203,7 +203,7 @@ defmodule Bleroma.Utils do
     send_to_tg(tg_user_id, post)
   end
 
-  def post_from_template(acct, content, status_id,
+  def post_from_template(acct, content, status_id, reblog,
     reblogs_count, favourites_count, reply_count, html \\ true, reply_to \\ nil, parent \\ nil, media \\ nil, max_content_sz \\ 3900) do
 
     reply_count = "x"
@@ -234,11 +234,14 @@ defmodule Bleroma.Utils do
     # todo: add after implementing pleroma extension
     # ↺#{reply_count}
 
+    {author, rt_notice} = if reblog, do: {Map.get(reblog.account, "acct"), "🔁 #{acct}"}, else: {acct, ""}
+
     ""
-    <> "#{acct}" <> "#{reply_str}" <> ":"
+    <> "#{author}" <> "#{reply_str}" <> ":"
     <> quote_str
     <> "#{media_str}"
     <> "#{content}"
+    <> rt_notice
     <> "\n/#{status_id} 🔁#{reblogs_count} ⭐#{favourites_count}"
   end
 
@@ -330,7 +333,7 @@ defmodule Bleroma.Utils do
       #  end
 
     string_to_send = post_from_template( # 
-      st.account.acct, content, st.id, st.reblogs_count, st.favourites_count, 0, false, st.in_reply_to_id, parent, st.media_attachments, 3900)
+      st.account.acct, content, st.id, st.reblog, st.reblogs_count, st.favourites_count, 0, false, st.in_reply_to_id, parent, st.media_attachments, 3900)
 
     {:message, string_to_send, opts_parse_mode}
   end
