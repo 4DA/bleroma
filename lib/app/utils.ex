@@ -275,7 +275,7 @@ defmodule Bleroma.Utils do
         [
           %{
             callback_data: "/del #{st.id}",
-            text: "Delete"
+            text: "delete"
           }
         ]
       else
