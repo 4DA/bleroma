@@ -230,7 +230,7 @@ defmodule Bleroma.Utils do
                     else "" end
 
     content = if content != nil and String.length(content) > 0,
-      do: "\n" <> String.slice(content, 0, max_content_sz) <> "\n",
+      do: "\n" <> String.trim(String.slice(content, 0, max_content_sz)) <> "\n",
       else: ""
 
     reply_str = if reply_to do " → /" <> reply_to else "" end
@@ -247,7 +247,7 @@ defmodule Bleroma.Utils do
     # todo: add after implementing pleroma extension
     # ↺#{reply_count}
 
-    {author, rt_notice} = if reblog, do: {Map.get(reblog.account, "acct"), "🔁 #{acct}"}, else: {acct, ""}
+    {author, rt_notice} = if reblog, do: {Map.get(reblog.account, "acct"), "--\n🔁 #{acct}"}, else: {acct, ""}
 
     ""
     <> "#{author}" <> "#{reply_str}" <> ":"
@@ -318,6 +318,8 @@ defmodule Bleroma.Utils do
            |> String.replace("<br>", "<br>\n")
            |> String.replace("<br/>", "<br/>\n")
            |> HtmlSanitizeEx.Scrubber.scrub(Bleroma.Scrubber.Tg)
+
+    content = String.replace(content, "\n\n", "\n")
 
     reply_markup = status_reply_markup(st, conn)
     
