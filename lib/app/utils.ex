@@ -203,6 +203,21 @@ defmodule Bleroma.Utils do
     send_to_tg(tg_user_id, post)
   end
 
+
+  def make_attachment_link(
+    %Hunter.Attachment{description: nil,
+                       remote_url: url} ) do
+    desc = List.last(String.split(url, "/"))
+    "<a href=\"#{url}\">#{desc}</a>\n"
+  end
+
+  def make_attachment_link(
+    %Hunter.Attachment{description: desc,
+                       remote_url: url} ) do
+    "<a href=\"#{url}\">#{desc}</a>\n"
+  end
+
+
   def post_from_template(acct, content, status_id, reblog,
     reblogs_count, favourites_count, reply_count, html \\ true, reply_to \\ nil, parent \\ nil, media \\ nil, max_content_sz \\ 3900) do
 
@@ -211,9 +226,7 @@ defmodule Bleroma.Utils do
     ito = if html == true do "<i>" else "" end
     itc = if html == true do "</i>" else "" end
 
-    media_str = if media do ["\n"] ++ Enum.map(media,
-                    fn %Hunter.Attachment{description: desc,
-                             remote_url: url} -> "<a href=\"#{url}\">#{desc}</a>\n" end)
+    media_str = if media do ["\n"] ++ Enum.map(media, fn att -> make_attachment_link(att) end)
                     else "" end
 
     content = if content != nil and String.length(content) > 0,
@@ -332,8 +345,12 @@ defmodule Bleroma.Utils do
       #   # Nadia.send_photo(tg_user_id, url, opts)
       #  end
 
+    Logger.log(:info, "showing st: #{inspect(st)}")
+
     string_to_send = post_from_template( # 
       st.account.acct, content, st.id, st.reblog, st.reblogs_count, st.favourites_count, 0, true, st.in_reply_to_id, parent, st.media_attachments, 3900)
+
+    Logger.log(:info, "tg msg: #{string_to_send}")
 
     {:message, string_to_send, opts_parse_mode}
   end
