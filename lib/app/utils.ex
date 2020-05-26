@@ -228,6 +228,13 @@ defmodule Bleroma.Utils do
   end
 
   def make_attachment_link(
+    %Hunter.Attachment{description: "",
+                       remote_url: url} ) do
+    desc = List.last(String.split(url, "/"))
+    "<a href=\"#{url}\">#{desc}</a>\n"
+  end
+
+  def make_attachment_link(
     %Hunter.Attachment{description: desc,
                        remote_url: url} ) do
     "<a href=\"#{url}\">#{desc}</a>\n"
