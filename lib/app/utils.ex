@@ -205,10 +205,15 @@ defmodule Bleroma.Utils do
   def show_update(update, tg_user_id, conn) do
     status = Poison.decode!(update, as: status_nested_struct())
     case status do
+      # show update that is not a reply
       %Hunter.Status{in_reply_to_id: nil, reblog:  nil} ->
         do_show_status(status, tg_user_id, conn)
-      %Hunter.Status{in_reply_to_id: nil, reblog: %Hunter.Status{in_reply_to_id: nil}} ->
+
+      # show update if it is a reblogged reply
+      %Hunter.Status{in_reply_to_id: nil, reblog: %Hunter.Status{}} ->
         do_show_status(status, tg_user_id, conn)
+
+      # ignore update otherwise
       %Hunter.Status{} ->
         Logger.log(:info, "ignoring status update from maston: #{inspect(status)}")
     end
