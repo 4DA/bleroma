@@ -196,11 +196,22 @@ defmodule Bleroma.Utils do
     send_to_tg(tg_user_id, post)
   end
 
-  def show_update(update, tg_user_id, conn) do
-    status = Poison.decode!(update, as: status_nested_struct())
-    Logger.log(:info, "posting update = #{inspect(status)}")
+  defp do_show_status(status, tg_user_id, conn) do
+    Logger.log(:info, "posting status = #{inspect(status)}")
     post = prepare_post(status, tg_user_id, conn)
     send_to_tg(tg_user_id, post)
+  end
+
+  def show_update(update, tg_user_id, conn) do
+    status = Poison.decode!(update, as: status_nested_struct())
+    case status do
+      %Hunter.Status{in_reply_to_id: nil, reblog:  nil} ->
+        do_show_status(status, tg_user_id, conn)
+      %Hunter.Status{in_reply_to_id: nil, reblog: %Hunter.Status{in_reply_to_id: nil}} ->
+        do_show_status(status, tg_user_id, conn)
+      %Hunter.Status{} ->
+        Logger.log(:info, "ignoring status update from maston: #{inspect(status)}")
+    end
   end
 
 
