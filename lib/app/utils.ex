@@ -286,6 +286,8 @@ defmodule Bleroma.Utils do
   def status_reply_markup(st, conn) do
     me = if conn do Hunter.verify_credentials(conn) else nil end
 
+    st_id = if st.reblog, do: st.reblog.id, else: st.id
+
     inline_keyboard = [
       %{
         text: "open",
@@ -311,11 +313,11 @@ defmodule Bleroma.Utils do
         like_text = if st.favourited, do: "unlike", else: "like"
         [
           %{
-            callback_data: "#{repost_cmd} #{st.id}",
+            callback_data: "#{repost_cmd} #{st_id}",
             text: "#{repost_text}"
           },
           %{
-            callback_data: "#{like_cmd} #{st.id}",
+            callback_data: "#{like_cmd} #{st_id}",
             text: "#{like_text}"
           }
         ]
