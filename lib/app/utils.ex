@@ -284,6 +284,9 @@ defmodule Bleroma.Utils do
   end
 
   def status_reply_markup(st, conn) do
+    Logger.log(:info, "st reply markup = #{inspect(st)}")
+    subj_acct = if st.reblog, do: st.reblog.account.acct, else: st.account.acct
+
     me = if conn do Hunter.verify_credentials(conn) else nil end
 
     st_id = if st.reblog, do: st.reblog.id, else: st.id
@@ -319,6 +322,10 @@ defmodule Bleroma.Utils do
           %{
             callback_data: "#{like_cmd} #{st_id}",
             text: "#{like_text}"
+          },
+          %{
+            callback_data: "/userinfo #{subj_acct}",
+            text: "author"
           }
         ]
       end
@@ -334,7 +341,35 @@ defmodule Bleroma.Utils do
           ]
     }
   end
-  
+
+  def prepare_account_card(pleroma_id, tg_user_id, conn) do
+    acc = Hunter.account(conn, pleroma_id)
+
+    note = acc.note
+      |> String.replace("</p>", "</p>\n")
+      |> String.replace("<br>", "<br>\n")
+      |> String.replace("<br/>", "<br/>\n")
+      |> HtmlSanitizeEx.Scrubber.scrub(Bleroma.Scrubber.Tg)
+
+    text =
+      "<a href=\"#{acc.url}\"> #{acc.acct} </a>" <>
+      " / #{acc.display_name}" <>
+      "\n\n#{note}"   <>
+      "\nStatuses: #{acc.statuses_count}"
+
+    markup = %Nadia.Model.InlineKeyboardMarkup{
+      inline_keyboard: [
+        [
+          %{
+            text: "open",
+            url: "#{acc.url}"
+          }
+        ],
+      ]
+    }
+
+    {text, markup}
+  end
 
   def prepare_post(%Hunter.Status{} = st, tg_user_id, conn) do
     {:ok, conn} = StateManager.get_conn(tg_user_id)

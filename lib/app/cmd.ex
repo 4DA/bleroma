@@ -21,6 +21,24 @@ defmodule Bleroma.Cmd do
   #   # end
   # end
 
+  callback_query_command "userinfo" do
+    {:ok, conn} = StateManager.get_conn(update.callback_query.from.id)
+    [_command | pleroma_id] = String.split(update.callback_query.data, " ")
+
+    try do
+      {text, markup} = Utils.prepare_account_card(pleroma_id, update.callback_query.from.id, conn)
+      Nadia.send_message(update.callback_query.from.id, text,
+        [reply_markup: markup, parse_mode: "HTML"])
+
+      answer_callback_query(text: "ok")
+
+    rescue
+      err in Hunter.Error ->  Logger.log(:error, "Error: #{inspect(err)}");
+                              answer_callback_query(text: "#{inspect(err.reason)}")
+    end
+  end
+
+
   callback_query_command "del" do
     {:ok, conn} = StateManager.get_conn(update.callback_query.from.id)
     [_command | id] = String.split(update.callback_query.data, " ")
