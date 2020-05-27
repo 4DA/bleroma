@@ -351,6 +351,13 @@ defmodule Bleroma.Utils do
       |> String.replace("<br/>", "<br/>\n")
       |> HtmlSanitizeEx.Scrubber.scrub(Bleroma.Scrubber.Tg)
 
+    {follow_text, follow_cmd} = case Hunter.relationships(conn, [pleroma_id]) do
+                                  [%Hunter.Relationship{followed_by: is_followed}] -> if is_followed,
+                                  do: {"unfollow", "/unfollow #{pleroma_id}"},
+                                  else: {"follow", "/follow #{pleroma_id}"}
+      [] -> {"follow", "/follow #{pleroma_id}"}
+    end
+
     text =
       "<a href=\"#{acc.url}\"> #{acc.acct} </a>" <>
       " / #{acc.display_name}" <>
@@ -363,7 +370,11 @@ defmodule Bleroma.Utils do
           %{
             text: "open",
             url: "#{acc.url}"
-          }
+          },
+          %{
+            text: follow_text,
+            callback_data: follow_cmd
+           }
         ],
       ]
     }
