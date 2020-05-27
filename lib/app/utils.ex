@@ -272,13 +272,15 @@ defmodule Bleroma.Utils do
 
     {author, rt_notice} = if reblog, do: {Map.get(reblog.account, "acct"), "--\n🔁 #{acct}"}, else: {acct, ""}
 
+    st_id = if reblog, do: reblog.id, else: status_id
+
     ""
     <> "#{author}" <> "#{reply_str}" <> ":"
     <> quote_str
     <> "#{media_str}"
     <> "#{content}"
     <> rt_notice
-    <> "\n/#{status_id} 🔁#{reblogs_count} ⭐#{favourites_count}"
+    <> "\n/#{st_id} 🔁#{reblogs_count} ⭐#{favourites_count}"
   end
 
   def status_reply_markup(st, conn) do
