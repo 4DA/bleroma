@@ -351,10 +351,13 @@ defmodule Bleroma.Utils do
       |> String.replace("<br/>", "<br/>\n")
       |> HtmlSanitizeEx.Scrubber.scrub(Bleroma.Scrubber.Tg)
 
-    {follow_text, follow_cmd} = case Hunter.relationships(conn, [pleroma_id]) do
-                                  [%Hunter.Relationship{followed_by: is_followed}] -> if is_followed,
-                                  do: {"unfollow", "/unfollow #{pleroma_id}"},
-                                  else: {"follow", "/follow #{pleroma_id}"}
+    rels = Hunter.relationships(conn, [acc.id])
+    Logger.log(:info, "acc = #{inspect(acc)} | rels = #{inspect(rels)}")
+
+    {follow_text, follow_cmd} = case Hunter.relationships(conn, [acc.id]) do
+                                  [%Hunter.Relationship{following: following}] -> if following,
+                                  do: {"unfollow", "/unfollow #{acc.id}"},
+                                  else: {"follow", "/follow #{acc.id}"}
       [] -> {"follow", "/follow #{pleroma_id}"}
     end
 

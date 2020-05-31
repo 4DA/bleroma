@@ -38,6 +38,47 @@ defmodule Bleroma.Cmd do
     end
   end
 
+  callback_query_command "follow" do
+    {:ok, conn} = StateManager.get_conn(update.callback_query.from.id)
+    [_command | id] = String.split(update.callback_query.data, " ")
+
+    try do
+      Hunter.follow(conn, id)
+      answer_callback_query(text: "Done")
+
+      {text, markup} = Utils.prepare_account_card(id, update.callback_query.from.id, conn)
+
+      Nadia.edit_message_text(update.callback_query.message.chat.id,
+        update.callback_query.message.message_id, nil, text,
+        [reply_markup: markup, parse_mode: "HTML"])
+    rescue
+      err in Hunter.Error -> {:error, "#{inspect(err)}"};
+                              Logger.log(:error, "Error: #{inspect(err)}");
+                              answer_callback_query(text: "#{inspect(err.reason)}")
+    end
+  end
+
+  callback_query_command "unfollow" do
+    {:ok, conn} = StateManager.get_conn(update.callback_query.from.id)
+    [_command | id] = String.split(update.callback_query.data, " ")
+
+    try do
+      Hunter.unfollow(conn, id)
+      answer_callback_query(text: "Done")
+
+      {text, markup} = Utils.prepare_account_card(id, update.callback_query.from.id, conn)
+
+      Nadia.edit_message_text(update.callback_query.message.chat.id,
+        update.callback_query.message.message_id, nil, text,
+        [reply_markup: markup, parse_mode: "HTML"])
+
+    rescue
+      err in Hunter.Error -> {:error, "#{inspect(err)}"};
+                              Logger.log(:error, "Error: #{inspect(err)}");
+                              answer_callback_query(text: "#{inspect(err.reason)}")
+    end
+  end
+
 
   callback_query_command "del" do
     {:ok, conn} = StateManager.get_conn(update.callback_query.from.id)
