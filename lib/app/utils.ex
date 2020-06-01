@@ -158,7 +158,7 @@ defmodule Bleroma.Utils do
   defp status_nested_struct do
     %Hunter.Status{
       account: %Hunter.Account{},
-      reblog: %Hunter.Status{},
+      reblog: %Hunter.Status{account: %Hunter.Account{}},
       media_attachments: [%Hunter.Attachment{}],
       mentions: [%Hunter.Mention{}],
       tags: [%Hunter.Tag{}],
@@ -171,7 +171,7 @@ defmodule Bleroma.Utils do
       account: %Hunter.Account{},
       status: %Hunter.Status{
         account: %Hunter.Account{},
-        reblog: %Hunter.Status{},
+        reblog: %Hunter.Status{account: %Hunter.Account{}},
         media_attachments: [%Hunter.Attachment{}],
         mentions: [%Hunter.Mention{}],
         tags: [%Hunter.Tag{}],
