@@ -5,7 +5,8 @@
 - Receiving new posts from subscriptions
 
 ## Configuration
-Set instance and telegram parameters to `config/config.exs`:
+1. Install [Elixir](https://elixir-lang.org/install.html) with Erlang OTP 22 (23 is not yet tested);
+2. Set instance and telegram parameters to `config/config.exs`:
 ```
 config :app,
   bot_name: "XXX_bot",
@@ -15,6 +16,17 @@ config :app,
 
 config :nadia,
   token: "XXX" #<- bot api token
+```
+
+Go to project root and type:
+```
+mix deps.get
+```
+
+## Running
+Go to project root and type:
+```
+mix
 ```
 
 ## See also
