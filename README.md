@@ -1,22 +1,16 @@
 ## Features
 - Sending messages
-- Sending photos
-- Receiving notifications from user subscriptions
+- Sending photos/audio/files
+- Receiving notifications from subscriptions
+- Receiving new posts from subscriptions
 
 ## Configuration
-Create bleroma.json
-```
-iex -S mix
-
-```
-
+Set instance and telegram parameters to `config/config.exs`:
 ```
 config :app,
   bot_name: "XXX_bot",
   instance_url: "https://XXX",
   websocket_url: "wss://XXX/api/v1/streaming",
-  instance_client_id: "XXX",
-  instance_client_secret: "XXX",
   register_link: "XXX"
 
 config :nadia,
