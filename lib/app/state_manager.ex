@@ -18,7 +18,18 @@ defmodule StateManager do
     Logger.log(:info, "Started StateManager")
     {:ok, %StateManager{app: nil, storage: nil, conns: nil}} # 
 
-    app = Hunter.Application.load_credentials("bleroma")
+    # TODO, make PR to hunter to store creds in current dir
+    app_creds = System.user_home() <> "/.hunter/apps/bleroma.json"
+
+    app = if File.exists?(app_creds) do
+      Logger.log(:info, "file '#{app_creds}' found")
+      Hunter.Application.load_credentials("bleroma")
+    else
+      Logger.log(:info, "file '#{app_creds}' not found, registering new app")
+	Hunter.create_app("bleroma", "urn:ietf:wg:oauth:2.0:oob", ["read", "write", "follow"],
+	  nil, [save?: true, api_base_url: Application.get_env(:app, :instance_url)])
+    end
+
     storage = Storage.init()
     all_bearers = Storage.get_all(storage)
 

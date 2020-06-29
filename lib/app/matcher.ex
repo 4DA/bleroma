@@ -21,9 +21,7 @@ defmodule Bleroma.Matcher do
 
   @impl true
   def init(:ok) do
-    app = Hunter.Application.load_credentials("bleroma")
-    Logger.log(:info, "Loaded application #{inspect(app)}")
-    {:ok, %{app: app, storage: Storage.init(), conns: %{}}}
+    {:ok, %{storage: Storage.init(), conns: %{}}}
   end
 
   @impl true
