@@ -11,7 +11,7 @@ defmodule Bleroma.Cmd do
   #   # try do
   #     {:ok, conn} = StateManager.get_conn(update.message.from.id)
   #     Logger.log(:info, "notconn: #{inspect(conn)}")
-  #     status = Hunter.notifications(conn)
+  #     status = Hunter.notifications(conn.client)
 
   #     Logger.log(:info, "notifications: #{inspect(status)}")
 
@@ -43,7 +43,7 @@ defmodule Bleroma.Cmd do
     [_command | id] = String.split(update.callback_query.data, " ")
 
     try do
-      Hunter.follow(conn, id)
+      Hunter.follow(conn.client, id)
       answer_callback_query(text: "Done")
 
       {text, markup} = Utils.prepare_account_card(id, update.callback_query.from.id, conn)
@@ -63,7 +63,7 @@ defmodule Bleroma.Cmd do
     [_command | id] = String.split(update.callback_query.data, " ")
 
     try do
-      Hunter.unfollow(conn, id)
+      Hunter.unfollow(conn.client, id)
       answer_callback_query(text: "Done")
 
       {text, markup} = Utils.prepare_account_card(id, update.callback_query.from.id, conn)
@@ -85,7 +85,7 @@ defmodule Bleroma.Cmd do
     [_command | id] = String.split(update.callback_query.data, " ")
 
     try do
-      Hunter.destroy_status(conn, id)
+      Hunter.destroy_status(conn.client, id)
       answer_callback_query(text: "Done")
     rescue
       err in Hunter.Error -> {:error, "#{inspect(err)}"};
@@ -99,7 +99,7 @@ defmodule Bleroma.Cmd do
     [_command | st_id] = String.split(update.callback_query.data, " ")
 
       try do
-        Hunter.reblog(conn, st_id)
+        Hunter.reblog(conn.client, st_id)
         answer_callback_query(text: "Reposted")
         Utils.update_tg_message(update, st_id, conn)
       rescue
@@ -114,7 +114,7 @@ defmodule Bleroma.Cmd do
     [_command | st_id] = String.split(update.callback_query.data, " ")
 
       try do
-        Hunter.unreblog(conn, st_id)
+        Hunter.unreblog(conn.client, st_id)
         answer_callback_query(text: "Unreposted")
         Utils.update_tg_message(update, st_id, conn)
 
@@ -130,7 +130,7 @@ defmodule Bleroma.Cmd do
     [_command | st_id] = String.split(update.callback_query.data, " ")
 
       try do
-        Hunter.favourite(conn, st_id)
+        Hunter.favourite(conn.client, st_id)
         answer_callback_query(text: "Liked")
 
         Utils.update_tg_message(update, st_id, conn)
@@ -147,7 +147,7 @@ defmodule Bleroma.Cmd do
     [_command | st_id] = String.split(update.callback_query.data, " ")
 
       try do
-        Hunter.unfavourite(conn, st_id)
+        Hunter.unfavourite(conn.client, st_id)
         answer_callback_query(text: "Unliked")
 
         Utils.update_tg_message(update, st_id, conn)
@@ -159,7 +159,7 @@ defmodule Bleroma.Cmd do
       end
   end
 
-  command ["help"] do
+  command ["start", "help"] do
     send_message(
       ""
       <> "/logout - log out\n"
@@ -207,7 +207,7 @@ defmodule Bleroma.Cmd do
 
       try do
         status_id = Enum.at(String.split(update.message.text, "/"), 1)
-        status = Hunter.status(conn, status_id)
+        status = Hunter.status(conn.client, status_id)
         post = Utils.prepare_post(status, tg_user_id, conn)
         Utils.send_to_tg(tg_user_id, post)
       rescue err in Hunter.Error ->

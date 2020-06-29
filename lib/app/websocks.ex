@@ -6,11 +6,11 @@ defmodule Bleroma.Websocks do
 
   def start({tg_id, conn}) do
     ws_url = Application.get_env(:app, :websocket_url)
-    access_token = conn.bearer_token
+    access_token = conn.client.bearer_token
 
     Logger.log(:info, "Started WS [tg_id: #{tg_id}, bearer: #{access_token}]")
 
-    WebSockex.start("#{ws_url}?access_token=#{conn.bearer_token}&stream=user",
+    WebSockex.start("#{ws_url}?access_token=#{conn.client.bearer_token}&stream=user",
       __MODULE__, {tg_id, conn}, ssl_options: [
         ciphers: :ssl.cipher_suites() ++ [{:rsa, :aes_128_cbc, :sha}]
       ])

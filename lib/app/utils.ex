@@ -3,21 +3,23 @@ defmodule Bleroma.Utils do
   require Nadia
   require Bleroma.Scrubber.Tg
   require Bleroma.Helpers
+  require Bleroma.Connection
 
   require Hunter
   alias Hunter.{Api.Request, Config}
+  alias Bleroma.Connection
   
   def login_user(user_id, username, token, state) do
     base_instance = Application.get_env(:app, :instance_url)
     
     try do
-      conn = Hunter.log_in_oauth(
+      client = Hunter.log_in_oauth(
         StateManager.get_app(), token, base_instance)
 
-      account = Hunter.verify_credentials(conn)
-      StateManager.add_user(user_id, conn)
-      Logger.log(:info, "Auth OK for tg_user_id=#{user_id} name=#{username} conn=#{inspect(conn)}")
-      {:ok, conn, account}
+      account = Hunter.verify_credentials(client)
+      StateManager.add_user(user_id, %Connection{client: client, tg_id: user_id})
+      Logger.log(:info, "Auth OK for tg_user_id=#{user_id} name=#{username} client=#{inspect(client)}")
+      {:ok, client, account}
     rescue
       err in Hunter.Error -> {:error, "#{inspect(err)}"}
     end
@@ -28,7 +30,7 @@ defmodule Bleroma.Utils do
       try do
         nc = Hunter.new([base_url: base_instance, bearer_token: bearer])
         account = Hunter.verify_credentials(nc)
-        nc
+        %Connection{client: nc, tg_id: user_id}
       rescue
         err in Hunter.Error ->
           Logger.log(:error, "new_connection: verify_creds error for tg_user_id=#{user_id}: #{inspect(err)}");
@@ -62,8 +64,6 @@ defmodule Bleroma.Utils do
     get_connection(user.id)
   end
   
-  bleroma_bot_id = Application.get_env(:app, :bot_name)
-
   defp new_status_reply_markup(status) do
     %Nadia.Model.InlineKeyboardMarkup{
       inline_keyboard: [
@@ -100,7 +100,7 @@ defmodule Bleroma.Utils do
       :error
     else
       reply_status_id = List.last(List.last(caps))
-      source_status = Hunter.status(conn, reply_status_id)
+      source_status = Hunter.status(conn.client, reply_status_id)
       make_post(update, [visibility: "{source_status.visibility}", in_reply_to_id: reply_status_id])
     end
   end
@@ -135,7 +135,7 @@ defmodule Bleroma.Utils do
         
       file_path = get_file_from_tg(update.message.from.id, file_id)
 
-      media = Hunter.upload_media(conn, file_path)
+      media = Hunter.upload_media(conn.client, file_path)
 
       Logger.log(:info, "media = #{inspect(media)}")
 
@@ -152,7 +152,7 @@ defmodule Bleroma.Utils do
       {nil, caption} -> caption
     end
 
-    status = Hunter.create_status(conn, status_text, params)
+    status = Hunter.create_status(conn.client, status_text, params)
 
     {status, new_status_reply_markup(status)}
   end
@@ -206,9 +206,9 @@ defmodule Bleroma.Utils do
 
   def show_update(update, tg_user_id, conn) do
     status = Poison.decode!(update, as: status_nested_struct())
-    is_shown = StateManager.is_shown?(tg_user_id, status.id)
-
-    case {is_shown, status} do
+    ignore? = StateManager.is_shown?(tg_user_id, status.id)
+    
+    case {ignore?, status} do
       # show update that is not a reply
       {false, %Hunter.Status{in_reply_to_id: nil, reblog:  nil}} ->
 	StateManager.add_shown(tg_user_id, status.id);
@@ -293,7 +293,7 @@ defmodule Bleroma.Utils do
     Logger.log(:info, "st reply markup = #{inspect(st)}")
     subj_acct = if st.reblog, do: st.reblog.account.acct, else: st.account.acct
 
-    me = if conn do Hunter.verify_credentials(conn) else nil end
+    me = if conn.client do Hunter.verify_credentials(conn.client) else nil end
 
     st_id = if st.reblog, do: st.reblog.id, else: st.id
 
@@ -349,7 +349,7 @@ defmodule Bleroma.Utils do
   end
 
   def prepare_account_card(pleroma_id, tg_user_id, conn) do
-    acc = Hunter.account(conn, pleroma_id)
+    acc = Hunter.account(conn.client, pleroma_id)
 
     note = acc.note
       |> String.replace("</p>", "</p>\n")
@@ -357,10 +357,10 @@ defmodule Bleroma.Utils do
       |> String.replace("<br/>", "<br/>\n")
       |> HtmlSanitizeEx.Scrubber.scrub(Bleroma.Scrubber.Tg)
 
-    rels = Hunter.relationships(conn, [acc.id])
+    rels = Hunter.relationships(conn.client, [acc.id])
     Logger.log(:info, "acc = #{inspect(acc)} | rels = #{inspect(rels)}")
 
-    {follow_text, follow_cmd} = case Hunter.relationships(conn, [acc.id]) do
+    {follow_text, follow_cmd} = case Hunter.relationships(conn.client, [acc.id]) do
                                   [%Hunter.Relationship{following: following}] -> if following,
                                   do: {"unfollow", "/unfollow #{acc.id}"},
                                   else: {"follow", "/follow #{acc.id}"}
@@ -410,7 +410,7 @@ defmodule Bleroma.Utils do
     opts_parse_mode = opts ++ [{:parse_mode, "HTML"}]
 
     parent = if (st.in_reply_to_id) do
-      HtmlSanitizeEx.strip_tags(Hunter.status(conn, st.in_reply_to_id).content)
+      HtmlSanitizeEx.strip_tags(Hunter.status(conn.client, st.in_reply_to_id).content)
     else
       nil
     end
@@ -456,7 +456,7 @@ defmodule Bleroma.Utils do
 
   def update_tg_message(update, status_id, conn) do
     Logger.log(:info, "edit_req = #{inspect(update)}")
-    st = Hunter.status(conn, status_id)
+    st = Hunter.status(conn.client, status_id)
 
     case prepare_post(st, update.callback_query.from.id, conn) do
       {:photo, url, opts} ->
