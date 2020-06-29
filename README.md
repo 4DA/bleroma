@@ -29,6 +29,23 @@ Go to project root and type:
 mix
 ```
 
+## Using bot
+You need to paste ouath token from your instance. Send `/help` to bot to get oauth link.
+After oauth validation on instance insert send the link to bot via `/indentify <token>` command
+
+## TODO
+- possibility to see recent author posts
+- handle when someone likes/reposts your post
+- show private post icon for such posts
+- add choosing visibility for posts
+- Parse of telegram message entities, like bold, links etc
+- show audio title/artist in caption
+- update help
+- support different instances
+- send reply id as html link
+- oauth via phoenix server on subdomain
+- PRs to Hunter to avoid using exceptions
+
 ## See also
 [Used as reference](https://github.com/lubien/elixir-telegram-bot-boilerplate)
 
