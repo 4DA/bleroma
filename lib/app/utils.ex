@@ -17,7 +17,7 @@ defmodule Bleroma.Utils do
         StateManager.get_app(), token, base_instance)
 
       account = Hunter.verify_credentials(client)
-      StateManager.add_user(user_id, %Connection{client: client, tg_id: user_id})
+      StateManager.add_user(user_id, %Connection{client: client, tg_id: user_id, acct: account.acct})
       Logger.log(:info, "Auth OK for tg_user_id=#{user_id} name=#{username} client=#{inspect(client)}")
       {:ok, client, account}
     rescue
@@ -30,7 +30,7 @@ defmodule Bleroma.Utils do
       try do
         nc = Hunter.new([base_url: base_instance, bearer_token: bearer])
         account = Hunter.verify_credentials(nc)
-        %Connection{client: nc, tg_id: user_id}
+        %Connection{client: nc, tg_id: user_id, acct: account.acct}
       rescue
         err in Hunter.Error ->
           Logger.log(:error, "new_connection: verify_creds error for tg_user_id=#{user_id}: #{inspect(err)}");
@@ -193,9 +193,12 @@ defmodule Bleroma.Utils do
   def show_notification(notification, tg_user_id, conn) do
     status = Poison.decode!(notification, as: notification_nested_struct()).status
 
-    Logger.log(:info, "posting_notification = #{inspect(status)}")
-    post = prepare_post(status, tg_user_id, conn)
-    send_to_tg(tg_user_id, post)
+    if !StateManager.is_shown?(tg_user_id, status.id) do
+      StateManager.add_shown(tg_user_id, status.id);
+      Logger.log(:info, "posting_notification = #{inspect(status)}")
+      post = prepare_post(status, tg_user_id, conn)
+      send_to_tg(tg_user_id, post)
+    end
   end
 
   defp do_show_status(status, tg_user_id, conn) do
@@ -207,6 +210,10 @@ defmodule Bleroma.Utils do
   def show_update(update, tg_user_id, conn) do
     status = Poison.decode!(update, as: status_nested_struct())
     ignore? = StateManager.is_shown?(tg_user_id, status.id)
+
+    # don't show posts from user himself
+    ignore? = ignore? || (status.account.acct == conn.acct)
+    Logger.log(:info, "ignore? #{status.account.acct} #{conn.acct}")
     
     case {ignore?, status} do
       # show update that is not a reply
