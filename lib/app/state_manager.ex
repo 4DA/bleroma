@@ -96,5 +96,19 @@ defmodule StateManager do
     GenServer.call(__MODULE__, {:get_app})
   end
 
+  # add update id
+  def add_shown(tg_user_id, post_id) do
+    Logger.log(:info, "add_shown {#{tg_user_id}, #{post_id}}")
+    Cachex.incr(:shown_updates, {tg_user_id, post_id}) 
+  end
+
+  # check whether update id was shown
+  def is_shown?(tg_user_id, post_id) do
+    case Cachex.get(:shown_updates, {tg_user_id, post_id}) do
+      {:ok, nil} -> false
+      {:ok, _} -> true
+    end
+  end
+
 end
 

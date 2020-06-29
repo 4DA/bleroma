@@ -13,7 +13,7 @@ defmodule App.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :nadia],
+    [applications: [:cachex, :logger, :nadia],
      mod: {App, []}]
   end
 
@@ -28,7 +28,8 @@ defmodule App.Mixfile do
       # for local debugging:
       # {:hunter, path: "deps/hunter"},
       {:websockex, "~> 0.4.2"},
-      {:html_sanitize_ex, "~> 1.4.0"}
+      {:html_sanitize_ex, "~> 1.4.0"},
+      {:cachex, "~> 3.2"}
     ]
 
   end

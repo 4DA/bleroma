@@ -137,6 +137,8 @@ defmodule Bleroma.Utils do
 
       media = Hunter.upload_media(conn, file_path)
 
+      Logger.log(:info, "media = #{inspect(media)}")
+
       File.rm(file_path)
 
       [media_ids: [media.id]]
@@ -204,17 +206,21 @@ defmodule Bleroma.Utils do
 
   def show_update(update, tg_user_id, conn) do
     status = Poison.decode!(update, as: status_nested_struct())
-    case status do
+    is_shown = StateManager.is_shown?(tg_user_id, status.id)
+
+    case {is_shown, status} do
       # show update that is not a reply
-      %Hunter.Status{in_reply_to_id: nil, reblog:  nil} ->
+      {false, %Hunter.Status{in_reply_to_id: nil, reblog:  nil}} ->
+	StateManager.add_shown(tg_user_id, status.id);
         do_show_status(status, tg_user_id, conn)
 
       # show update if it is a reblogged reply
-      %Hunter.Status{in_reply_to_id: nil, reblog: %Hunter.Status{}} ->
+      {false, %Hunter.Status{in_reply_to_id: nil, reblog: %Hunter.Status{}}} ->
+	StateManager.add_shown(tg_user_id, status.id);
         do_show_status(status, tg_user_id, conn)
 
       # ignore update otherwise
-      %Hunter.Status{} ->
+      {_, %Hunter.Status{}} ->
         Logger.log(:info, "ignoring status update from maston: #{inspect(status)}")
     end
   end
