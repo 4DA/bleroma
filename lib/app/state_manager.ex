@@ -49,7 +49,7 @@ defmodule StateManager do
 
   @impl true
   def handle_call({:add_user, tg_user_id, conn}, _from, state) do
-    Storage.store_auth(state.storage, tg_user_id, conn.bearer_token)
+    Storage.store_auth(state.storage, tg_user_id, conn.client.bearer_token)
 
     {:ok, pid} = Bleroma.Websocks.start({tg_user_id, conn})
 
