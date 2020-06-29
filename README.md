@@ -41,7 +41,7 @@ After oauth validation on instance insert send the link to bot via `/indentify <
 - Parse of telegram message entities, like bold, links etc
 - show audio title/artist in caption
 - update help
-- support different instances
+- support different instances for different users
 - send reply id as html link
 - oauth via phoenix server on subdomain
 - PRs to Hunter to avoid using exceptions

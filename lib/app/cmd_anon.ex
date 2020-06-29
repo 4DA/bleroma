@@ -6,9 +6,10 @@ defmodule Bleroma.CmdAnon do
   alias Bleroma.Utils
 
   def getHelpStringAnon() do
+    base_instance = Application.get_env(:app, :instance_url)
     register_link = Application.get_env(:app, :register_link)
     client_id = StateManager.get_app().client_id
-    oauth_link = "https://birdity.club/oauth/authorize?client_id=#{client_id}&response_type=code&redirect_uri=urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob&scope=read+write+follow"
+    oauth_link = "#{base_instance}/oauth/authorize?client_id=#{client_id}&response_type=code&redirect_uri=urn%3Aietf%3Awg%3Aoauth%3A2.0%3Aoob&scope=read+write+follow"
 
     ""
     <> "Visit [this link](#{oauth_link}) to authenticate, and send me code via /identify\n"
@@ -81,8 +82,9 @@ defmodule Bleroma.CmdAnon do
       # {:ok, conn} = StateManager.get_conn(update.message.from.id)
       tg_user_id = update.message.from.id
 
+      base_instance = Application.get_env(:app, :instance_url)
       status_id = Enum.at(String.split(update.message.text, "/"), 1)
-      case Bleroma.Helpers.status_dump_str("https://birdity.club", status_id) do
+      case Bleroma.Helpers.status_dump_str(base_instance, status_id) do
         nil -> Nadia.send_message(tg_user_id, "Status not found")
         status -> Utils.show_status_as_anon(status, update.message.from.id)
       end
