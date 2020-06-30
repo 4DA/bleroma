@@ -1,8 +1,7 @@
 ## Features
-- Sending messages
-- Sending photos/audio/files
-- Receiving notifications from subscriptions
-- Receiving new posts from subscriptions
+- Sending/deleting messages (with photos/audio/files)
+- Receiving notifications & new posts from subscriptions
+- Following users, liking & reposting posts
 
 ## Configuration
 1. Install [Elixir](https://elixir-lang.org/install.html) with Erlang OTP 22 (23 is not yet tested);
