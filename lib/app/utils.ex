@@ -9,7 +9,7 @@ defmodule Bleroma.Utils do
   alias Hunter.{Api.Request, Config}
   alias Bleroma.Connection
   
-  def login_user(user_id, username, token, state) do
+  def login_user(user_id, username, token) do
     base_instance = Application.get_env(:app, :instance_url)
     
     try do
@@ -182,34 +182,41 @@ defmodule Bleroma.Utils do
     }
   end
 
+  # if status is a reblog get original id
+  defp get_original_status_id(status) do
+    if (status.reblog), do: status.reblog.id, else: status.id
+  end
+
   # @todo find out how to match string type
   def show_status_as_anon(status_str, tg_user_id) do
     status = Poison.decode!(status_str, as: status_nested_struct())
     Logger.log(:info, "show_status = #{inspect(status)}")
-    post = prepare_post(status, tg_user_id, nil)
+    post = prepare_post(status, tg_user_id)
     send_to_tg(tg_user_id, post)
   end
 
   def show_notification(notification, tg_user_id, conn) do
     status = Poison.decode!(notification, as: notification_nested_struct()).status
 
-    if !StateManager.is_shown?(tg_user_id, status.id) do
-      StateManager.add_shown(tg_user_id, status.id);
+    st_id = get_original_status_id(status)
+    if !StateManager.is_shown?(tg_user_id, st_id) do
+      StateManager.add_shown(tg_user_id, st_id);
       Logger.log(:info, "posting_notification = #{inspect(status)}")
-      post = prepare_post(status, tg_user_id, conn)
+      post = prepare_post(status, tg_user_id)
       send_to_tg(tg_user_id, post)
     end
   end
 
   defp do_show_status(status, tg_user_id, conn) do
     Logger.log(:info, "posting status = #{inspect(status)}")
-    post = prepare_post(status, tg_user_id, conn)
+    post = prepare_post(status, tg_user_id)
     send_to_tg(tg_user_id, post)
   end
 
   def show_update(update, tg_user_id, conn) do
     status = Poison.decode!(update, as: status_nested_struct())
-    ignore? = StateManager.is_shown?(tg_user_id, status.id)
+    st_id = get_original_status_id(status)
+    ignore? = StateManager.is_shown?(tg_user_id, st_id)
 
     # don't show posts from user himself
     ignore? = ignore? || (status.account.acct == conn.acct)
@@ -218,12 +225,12 @@ defmodule Bleroma.Utils do
     case {ignore?, status} do
       # show update that is not a reply
       {false, %Hunter.Status{in_reply_to_id: nil, reblog:  nil}} ->
-	StateManager.add_shown(tg_user_id, status.id);
+	StateManager.add_shown(tg_user_id, st_id);
         do_show_status(status, tg_user_id, conn)
 
       # show update if it is a reblogged reply
       {false, %Hunter.Status{in_reply_to_id: nil, reblog: %Hunter.Status{}}} ->
-	StateManager.add_shown(tg_user_id, status.id);
+	StateManager.add_shown(tg_user_id, st_id);
         do_show_status(status, tg_user_id, conn)
 
       # ignore update otherwise
@@ -398,7 +405,7 @@ defmodule Bleroma.Utils do
     {text, markup}
   end
 
-  def prepare_post(%Hunter.Status{} = st, tg_user_id, conn) do
+  def prepare_post(%Hunter.Status{} = st, tg_user_id) do
     {:ok, conn} = StateManager.get_conn(tg_user_id)
     status_id = st.id
 
@@ -465,7 +472,7 @@ defmodule Bleroma.Utils do
     Logger.log(:info, "edit_req = #{inspect(update)}")
     st = Hunter.status(conn.client, status_id)
 
-    case prepare_post(st, update.callback_query.from.id, conn) do
+    case prepare_post(st, update.callback_query.from.id) do
       {:photo, url, opts} ->
         Nadia.edit_message_caption(update.callback_query.message.chat.id,
           update.callback_query.message.message_id, nil, opts)

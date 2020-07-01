@@ -208,7 +208,7 @@ defmodule Bleroma.Cmd do
       try do
         status_id = Enum.at(String.split(update.message.text, "/"), 1)
         status = Hunter.status(conn.client, status_id)
-        post = Utils.prepare_post(status, tg_user_id, conn)
+        post = Utils.prepare_post(status, tg_user_id)
         Utils.send_to_tg(tg_user_id, post)
       rescue err in Hunter.Error ->
           Nadia.send_message(tg_user_id, "Error fetching status #{err.reason}")

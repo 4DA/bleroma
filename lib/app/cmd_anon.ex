@@ -38,7 +38,7 @@ defmodule Bleroma.CmdAnon do
     # verify creds
     base_instance = Application.get_env(:app, :instance_url)
 
-    conn = Bleroma.Utils.login_user(user_id, username, token, state)
+    conn = Bleroma.Utils.login_user(user_id, username, token)
     case conn do
       {:ok, _, account} -> send_message("You have been authenticated as #{account.acct}")
       {:error, reason} -> send_message("Authentication error: #{inspect(reason)}")
