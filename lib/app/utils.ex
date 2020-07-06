@@ -229,8 +229,11 @@ defmodule Bleroma.Utils do
   def show_notification(notification, tg_user_id, conn) do
     status = Poison.decode!(notification, as: notification_nested_struct()).status
 
+    # don't show posts from user himself
+    my_post? = (status.account.acct == conn.acct)
+
     st_id = get_original_status_id(status)
-    if !StateManager.is_shown?(tg_user_id, st_id) do
+    if !my_post? && !StateManager.is_shown?(tg_user_id, st_id) do
       StateManager.add_shown(tg_user_id, st_id);
       Logger.log(:info, "posting_notification = #{inspect(status)}")
       post = prepare_post(status, tg_user_id)
