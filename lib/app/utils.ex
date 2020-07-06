@@ -81,6 +81,18 @@ defmodule Bleroma.Utils do
     }
   end
 
+  def get_file_from_tg(tg_user_id, file_id) do
+    {:ok, nadia_file} = Nadia.get_file(file_id)
+    {:ok, link} = Nadia.get_file_link(nadia_file)
+    %HTTPoison.Response{body: body} = HTTPoison.get!(link)
+
+    # TODO extend Hunter API to accept media as stream
+    fname = List.last(String.split(link, "/"))
+    fname = "#{tg_user_id}_#{fname}"
+    File.write!(fname, body)
+    fname
+  end
+
   # make status that is a reply
   def make_post(
     %Nadia.Model.Update {
@@ -105,19 +117,30 @@ defmodule Bleroma.Utils do
     end
   end
 
-  def get_file_from_tg(tg_user_id, file_id) do
-    {:ok, nadia_file} = Nadia.get_file(file_id)
-    {:ok, link} = Nadia.get_file_link(nadia_file)
-    %HTTPoison.Response{body: body} = HTTPoison.get!(link)
+  # make status that is a forward from chat
+  def make_post(
+    %Nadia.Model.Update {
+      message: %{
+	forward_from_chat: %{title: title, username: username}
+      }} = update) do
 
-    # TODO extend Hunter API to accept media as stream
-    fname = List.last(String.split(link, "/"))
-    fname = "#{tg_user_id}_#{fname}"
-    File.write!(fname, body)
-    fname
+    # Logger.log(:info, "fwd from: #{title} #{username}")
+    make_post(update, [visibility: "public"], {title, username})
   end
 
-  def make_post(update, params \\ [visibility: "public"]) do
+  # make status that is a forward from user
+  def make_post(
+    %Nadia.Model.Update {
+      message: %{
+	forward_from: %{first_name: first_name, username: username}
+      }
+    } = update) do
+
+    # Logger.log(:info, "fwd from: #{first_name} #{username}")
+    make_post(update, [visibility: "public"], {first_name, username})
+  end
+
+  def make_post(update, params \\ [visibility: "public"], forward \\ nil) do
     {:ok, conn} = get_conn(update)
     user_id = update.message.from.id
 
@@ -151,6 +174,14 @@ defmodule Bleroma.Utils do
       {text, nil} -> text
       {nil, caption} -> caption
     end
+
+    {content_type, status_text} = case forward do
+        nil -> {"text/plain", status_text}
+        {title, nil} -> {"text/plain", "Fwd from #{title}:\n" <> status_text}
+        {title, username} -> {"text/html", "<i>Fwd from <a href=\"https://t.me/#{username}\">#{title}</a></i>:\n" <> status_text}
+    end
+
+    params = params ++ [content_type: content_type]
 
     status = Hunter.create_status(conn.client, status_text, params)
 
@@ -219,6 +250,8 @@ defmodule Bleroma.Utils do
     ignore? = StateManager.is_shown?(tg_user_id, st_id)
 
     # don't show posts from user himself
+    # todo: consider original poster no just status acct
+    # like get_original_poster(status).acct == acct
     ignore? = ignore? || (status.account.acct == conn.acct)
     Logger.log(:info, "ignore? #{status.account.acct} #{conn.acct}")
     
