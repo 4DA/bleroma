@@ -297,7 +297,7 @@ defmodule Bleroma.Utils do
   end
 
 
-  def post_from_template(acct, content, status_id, reblog,
+  def post_from_template(acct, content, status_id, status_url, reblog,
     reblogs_count, favourites_count, reply_count, html \\ true, reply_to \\ nil, parent \\ nil, media \\ nil, max_content_sz \\ 3900) do
 
     reply_count = "x"
@@ -329,6 +329,7 @@ defmodule Bleroma.Utils do
     {author, rt_notice} = if reblog, do: {reblog.account.acct, "--\n🔁 #{acct}"}, else: {acct, ""}
 
     st_id = if reblog, do: reblog.id, else: status_id
+    st_url = if reblog, do: reblog.url, else: status_url
 
     ""
     <> "#{author}" <> "#{reply_str}" <> ":"
@@ -336,7 +337,7 @@ defmodule Bleroma.Utils do
     <> "#{media_str}"
     <> "#{content}"
     <> rt_notice
-    <> "\n/#{st_id} 🔁#{reblogs_count} ⭐#{favourites_count}"
+    <> "\n<a href=\"#{st_url}\">/#{st_id}</a> 🔁#{reblogs_count} ⭐#{favourites_count}"
   end
 
   def status_reply_markup(st, conn) do
@@ -486,7 +487,7 @@ defmodule Bleroma.Utils do
       else: {st.reblogs_count, st.favourites_count}
 
     string_to_send = post_from_template( # 
-      st.account.acct, content, st.id, st.reblog, reblogs_count, favourites_count, 0, true, st.in_reply_to_id, parent, st.media_attachments, 3900)
+      st.account.acct, content, st.id, st.url, st.reblog, reblogs_count, favourites_count, 0, true, st.in_reply_to_id, parent, st.media_attachments, 3900)
 
     Logger.log(:info, "tg msg: #{string_to_send}")
 
