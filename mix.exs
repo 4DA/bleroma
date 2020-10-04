@@ -19,7 +19,7 @@ defmodule App.Mixfile do
 
   defp deps do
     [
-      {:nadia, "~> 0.6.0"},
+      {:nadia, "~> 0.7.0"},
       {:tesla, "~> 1.3.0"},
       {:poison, "~> 4.0"},
       # upstream without my login_ouath fix
