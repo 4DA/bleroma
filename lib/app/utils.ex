@@ -117,6 +117,36 @@ defmodule Bleroma.Utils do
     end
   end
 
+  def wrap(substring, tag_open, tag_close) do
+    tag_open <> substring <> tag_close
+  end
+
+  def tg2html(text, entities) do
+    {html, last_oft} = List.foldl(entities, {"", 0},
+      fn ent, {res, last_oft} ->
+        ent_oft = ent.offset
+        ent_len = ent.length
+        pre = res <> if ent_oft > 0, do: String.slice(text, last_oft..ent_oft-1), else: ""
+
+        ent_html = case ent.type
+          do
+          "bold" -> wrap(String.slice(text, ent_oft, ent_len), "<b>", "</b>")
+          "italic" -> wrap(String.slice(text, ent_oft, ent_len), "<i>", "</i>")
+          "underline" -> wrap(String.slice(text, ent_oft, ent_len), "<u>", "</u>")
+          "strikethrough" -> wrap(String.slice(text, ent_oft, ent_len), "<strike>", "</strike>")
+          "code" -> wrap(String.slice(text, ent_oft, ent_len), "<code>", "</code>")
+          "pre" -> wrap(String.slice(text, ent_oft, ent_len), "<pre>", "</pre>")
+          "text_link" ->wrap(String.slice(text, ent_oft, ent_len),
+                      "<a href=\"#{ent.url}\">", "</a>")
+          _ -> String.slice(text, ent_oft, ent_len)
+        end
+
+        {pre <> ent_html, ent_oft + ent_len}
+      end)
+
+    html <> (String.split_at(text, last_oft) |> elem(1))
+  end
+
   # make status that is a forward from chat
   def make_post(
     %Nadia.Model.Update {
@@ -175,9 +205,14 @@ defmodule Bleroma.Utils do
       {nil, caption} -> caption
     end
 
+    status_text = if update.message.entities,
+      do: tg2html(status_text, update.message.entities), else: status_text
+
+    Logger.log(:info, "status_text = #{status_text}")
+
     {content_type, status_text} = case forward do
-        nil -> {"text/plain", status_text}
-        {title, nil} -> {"text/plain", "Fwd from #{title}:\n" <> status_text}
+        nil -> {"text/html", status_text}
+        {title, nil} -> {"text/html", "Fwd from #{title}:\n" <> status_text}
         {title, username} -> {"text/html", "<i>Fwd from <a href=\"https://t.me/#{username}\">#{title}</a></i>:\n" <> status_text}
     end
 
