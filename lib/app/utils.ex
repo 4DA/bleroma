@@ -270,14 +270,15 @@ defmodule Bleroma.Utils do
     st_id = get_original_status_id(status)
     if !my_post? && !StateManager.is_shown?(tg_user_id, st_id) do
       StateManager.add_shown(tg_user_id, st_id);
-      Logger.log(:info, "posting_notification = #{inspect(status)}")
+      Logger.log(:info, "masto->tg notification=#{st_id} -> #{tg_user_id}/#{conn.acct}")
       post = prepare_post(status, tg_user_id)
       send_to_tg(tg_user_id, post)
     end
   end
 
   defp do_show_status(status, tg_user_id, conn) do
-    Logger.log(:info, "posting status = #{inspect(status)}")
+    st_id = get_original_status_id(status)
+    Logger.log(:info, "masto->tg status= #{st_id} -> #{tg_user_id}/#{conn.acct}")
     post = prepare_post(status, tg_user_id)
     send_to_tg(tg_user_id, post)
   end
@@ -291,7 +292,6 @@ defmodule Bleroma.Utils do
     # todo: consider original poster no just status acct
     # like get_original_poster(status).acct == acct
     ignore? = ignore? || (status.account.acct == conn.acct)
-    Logger.log(:info, "ignore? #{status.account.acct} #{conn.acct}")
     
     case {ignore?, status} do
       # show update that is not a reply
@@ -306,7 +306,8 @@ defmodule Bleroma.Utils do
 
       # ignore update otherwise
       {_, %Hunter.Status{}} ->
-        Logger.log(:info, "ignoring status update from maston: #{inspect(status)}")
+        Logger.log(:info,
+          "masto->tg ignored from=#{status.account.acct} st_id=#{st_id} -> #{tg_user_id}/#{conn.acct}")
     end
   end
 
@@ -376,7 +377,7 @@ defmodule Bleroma.Utils do
   end
 
   def status_reply_markup(st, conn) do
-    Logger.log(:info, "st reply markup = #{inspect(st)}")
+    # Logger.log(:info, "st reply markup = #{inspect(st)}")
     subj_acct = if st.reblog, do: st.reblog.account.acct, else: st.account.acct
 
     me = if conn.client do Hunter.verify_credentials(conn.client) else nil end
@@ -425,7 +426,7 @@ defmodule Bleroma.Utils do
       []
     end
     
-    Logger.log(:info, "inline kbd: #{inspect(inline_keyboard)}")
+    # Logger.log(:info, "inline kbd: #{inspect(inline_keyboard)}")
     
     %Nadia.Model.InlineKeyboardMarkup{
           inline_keyboard: [
@@ -515,7 +516,7 @@ defmodule Bleroma.Utils do
       #   # Nadia.send_photo(tg_user_id, url, opts)
       #  end
 
-    Logger.log(:info, "showing st: #{inspect(st)}")
+    # Logger.log(:info, "showing st: #{inspect(st)}")
 
     {reblogs_count, favourites_count} = if st.reblog,
       do: {st.reblog.reblogs_count, st.reblog.favourites_count},
@@ -524,7 +525,7 @@ defmodule Bleroma.Utils do
     string_to_send = post_from_template( # 
       st.account.acct, content, st.id, st.url, st.reblog, reblogs_count, favourites_count, 0, true, st.in_reply_to_id, parent, st.media_attachments, 3900)
 
-    Logger.log(:info, "tg msg: #{string_to_send}")
+    # Logger.log(:info, "tg msg: #{string_to_send}")
 
     {:message, string_to_send, opts_parse_mode}
   end

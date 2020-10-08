@@ -44,7 +44,7 @@ defmodule Bleroma.Matcher do
 
   @impl true
   def handle_cast({:masto, _, message, _}, state) do
-    Logger.log(:info, "ignoring update from maston: #{inspect(message)}")
+    Logger.log(:info, "ignoring unknown update from maston: #{inspect(message)}")
     {:noreply, state}
   end
 

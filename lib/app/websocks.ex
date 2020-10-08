@@ -40,7 +40,9 @@ defmodule Bleroma.Websocks do
   def handle_frame({:text, msg}, {tg_id, conn} = state) do
     try do
       if (String.length(msg) > 0) do
-        Bleroma.Matcher.match({:masto, tg_id, Poison.decode!(msg), conn})
+        msg_decoded = Poison.decode!(msg)
+        Logger.log(:info, "websocks: new frame for #{tg_id}/#{conn.acct}")
+        Bleroma.Matcher.match({:masto, tg_id, msg_decoded, conn})
       end
     rescue err in Poison.Parse.Error ->
         Logger.error("Error decoding message from masto: #{msg}: #{inspect(err)}")
