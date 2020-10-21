@@ -344,9 +344,11 @@ defmodule Bleroma.Utils do
     media_str = if media do ["\n"] ++ Enum.map(media, fn att -> make_attachment_link(att) end)
                     else "" end
 
-    content = if content != nil and String.length(content) > 0,
-      do: "\n" <> String.trim(String.slice(content, 0, max_content_sz)) <> "\n",
-      else: ""
+    content = if content != nil and String.length(content) > 0 do
+      "\n" <> if String.length(content) > max_content_sz, do: "<i><a href=\"#{status_url}\"> Source text </a> is too long</i>", else: content
+    else
+      ""
+    end
 
     reply_str = if reply_to do " → /" <> reply_to else "" end
     quote_str = if parent do
@@ -531,8 +533,10 @@ defmodule Bleroma.Utils do
   end
 
   def send_to_tg(tg_user_id, {:message, string_to_send, opts_parse_mode}) do
-    case Nadia.send_message(tg_user_id, string_to_send, opts_parse_mode) do
-      {:error, _} -> Nadia.send_message(tg_user_id, "error")
+    ret = Nadia.send_message(tg_user_id, string_to_send, opts_parse_mode)
+    case ret do
+      {:error, what} -> Nadia.send_message(tg_user_id, "error: #{what.reason}");
+              Logger.log(:info, "failed bot->tg msg: #{string_to_send}")
       {:ok, _} ->  {:ok}
     end
   end
