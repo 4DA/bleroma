@@ -217,7 +217,7 @@ defmodule Bleroma.Cmd do
     # try to make post
     else
       try do
-        case Utils.make_post(update) do
+        case Utils.make_toot(update) do
           {status, reply_markup} ->
             Nadia.send_message(update.message.from.id, "Posted: /#{status.id}",
               [reply_markup: reply_markup])

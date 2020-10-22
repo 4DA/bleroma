@@ -94,7 +94,7 @@ defmodule Bleroma.Utils do
   end
 
   # make status that is a reply
-  def make_post(
+  def make_toot(
     %Nadia.Model.Update {
       message: %{reply_to_message: %{from: %{username: bleroma_bot_id}} = rmsg}
     } = update) do
@@ -113,7 +113,7 @@ defmodule Bleroma.Utils do
     else
       reply_status_id = List.last(List.last(caps))
       source_status = Hunter.status(conn.client, reply_status_id)
-      make_post(update, [visibility: "{source_status.visibility}", in_reply_to_id: reply_status_id])
+      make_toot(update, [visibility: "{source_status.visibility}", in_reply_to_id: reply_status_id])
     end
   end
 
@@ -148,18 +148,18 @@ defmodule Bleroma.Utils do
   end
 
   # make status that is a forward from chat
-  def make_post(
+  def make_toot(
     %Nadia.Model.Update {
       message: %{
 	forward_from_chat: %{title: title, username: username}
       }} = update) do
 
     # Logger.log(:info, "fwd from: #{title} #{username}")
-    make_post(update, [visibility: "public"], {title, username})
+    make_toot(update, [visibility: "public"], {title, username})
   end
 
   # make status that is a forward from user
-  def make_post(
+  def make_toot(
     %Nadia.Model.Update {
       message: %{
 	forward_from: %{first_name: first_name, username: username}
@@ -167,10 +167,10 @@ defmodule Bleroma.Utils do
     } = update) do
 
     # Logger.log(:info, "fwd from: #{first_name} #{username}")
-    make_post(update, [visibility: "public"], {first_name, username})
+    make_toot(update, [visibility: "public"], {first_name, username})
   end
 
-  def make_post(update, params \\ [visibility: "public"], forward \\ nil) do
+  def make_toot(update, params \\ [visibility: "public"], forward \\ nil) do
     {:ok, conn} = get_conn(update)
     user_id = update.message.from.id
 
