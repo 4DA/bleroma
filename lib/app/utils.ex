@@ -174,16 +174,18 @@ defmodule Bleroma.Utils do
     {:ok, conn} = get_conn(update)
     user_id = update.message.from.id
 
+# todo post up to four attachments
+
     params = params ++
     if (Enum.count(update.message.photo) > 0 or
-      update.message.document != nil or update.message.audio != nil) do
-
-        file_id = case {update.message.photo, update.message.document, update.message.audio} do
-                    {[s1], _, _} -> s1.file_id
-                    {[s1, s2], _, _} -> s2.file_id
-                    {[s1, s2 | _], _, _} -> s2.file_id
-                    {_, %Nadia.Model.Document{file_id: id}, _} -> id
-                    {_, _, %Nadia.Model.Audio{file_id: id}} -> id
+      update.message.document != nil or update.message.audio != nil or update.message.voice != nil) do
+        file_id = case {update.message.photo, update.message.document, update.message.audio, update.message.voice} do
+                    {[s1], _, _, _} -> s1.file_id
+                    {[s1, s2], _, _, _} -> s2.file_id
+                    {[s1, s2 | _], _, _, _} -> s2.file_id
+                    {_, %Nadia.Model.Document{file_id: id}, _, _} -> id
+                    {_, _, %Nadia.Model.Audio{file_id: id}, _} -> id
+                    {_, _, _, %Nadia.Model.Voice{file_id: id}} -> id
                   end
         
       file_path = get_file_from_tg(update.message.from.id, file_id)
