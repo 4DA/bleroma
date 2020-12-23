@@ -366,7 +366,7 @@ defmodule Bleroma.Utils do
     # todo: add after implementing pleroma extension
     # ↺#{reply_count}
 
-    {author, rt_notice} = if reblog, do: {reblog.account.acct, "--\n🔁 #{acct}"}, else: {acct, ""}
+    {author, rt_notice} = if reblog, do: {reblog.account.acct, "\n--\n🔁 #{acct}"}, else: {acct, ""}
 
     st_id = if reblog, do: reblog.id, else: status_id
     st_url = if reblog, do: reblog.url, else: status_url
