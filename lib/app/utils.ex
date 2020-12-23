@@ -347,7 +347,7 @@ defmodule Bleroma.Utils do
                     else "" end
 
     content = if content != nil and String.length(content) > 0 do
-      "\n" <> if String.length(content) > max_content_sz, do: "<i><a href=\"#{status_url}\"> Source text </a> is too long</i>", else: content
+      "\n" <> if String.length(content) > max_content_sz, do: "<i><a href=\"#{status_url}\"> Source text </a> is too long</i>\n", else: content
     else
       ""
     end
