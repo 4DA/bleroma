@@ -55,7 +55,15 @@ defmodule Bleroma.Websocks do
     Logger.info("Local close with reason: #{inspect reason}")
     {:ok, state}
   end
+
   def handle_disconnect(disconnect_map, state) do
+    Logger.info("Remote close")
     super(disconnect_map, state)
   end
+
+  def terminate(reason, state) do
+    IO.puts("Socket Terminating:\n#{inspect reason}\n\n#{inspect state}\n")
+    exit(:normal)
+  end
+
 end
