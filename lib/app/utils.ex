@@ -280,7 +280,7 @@ defmodule Bleroma.Utils do
 
   defp do_show_status(status, tg_user_id, conn) do
     st_id = get_original_status_id(status)
-    Logger.log(:info, "masto->tg status= #{st_id} -> #{tg_user_id}/#{conn.acct}")
+    Logger.log(:info, "masto->tg from=#{status.account.acct} st_id=#{st_id} -> #{tg_user_id}/#{conn.acct}")
     post = prepare_post(status, tg_user_id)
     send_to_tg(tg_user_id, post)
   end
