@@ -36,7 +36,7 @@ defmodule Bleroma.Matcher do
   @impl true
   def handle_cast({:masto, tg_id, %{"event" => "update"} = message,
                    conn}, state) do
-    Logger.log(:info, "update from maston: #{inspect(message)}")
+    # Logger.log(:info, "update from maston: #{inspect(message)}")
     payload = Map.get(message, "payload")
     show_update(payload, tg_id, conn)
     {:noreply, state}
