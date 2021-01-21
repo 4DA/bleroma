@@ -8,7 +8,7 @@ defmodule Bleroma.Websocks do
     ws_url = Application.get_env(:app, :websocket_url)
     access_token = conn.client.bearer_token
 
-    Logger.log(:info, "Started WS [pid=#{inspect self()}, tg_id: #{tg_id}, bearer: #{access_token}]")
+
 
     WebSockex.start_link("#{ws_url}?access_token=#{conn.client.bearer_token}&stream=user",
       __MODULE__, {tg_id, conn}, ssl_options: [
@@ -22,7 +22,10 @@ defmodule Bleroma.Websocks do
     WebSockex.send_frame(client, {:text, message})
   end
 
-  def handle_connect(_conn, state) do
+  def handle_connect(_conn, {tg_id, conn} = state) do
+    Logger.log(:info,
+      "Connected WS [pid=#{inspect self()}, tg_id: #{tg_id}, acc: #{conn.acct}]")    
+
     {:ok, state}
   end
 

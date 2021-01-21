@@ -53,8 +53,6 @@ defmodule StateManager do
       {tg, pid}
     end)
 
-    Logger.log(:info, "All WS: #{inspect(websocks)}")
-
     {:ok, %StateManager{app: app, storage: storage, conns: conns, websocks: websocks}} # 
   end
 
