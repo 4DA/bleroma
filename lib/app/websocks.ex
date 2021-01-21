@@ -4,13 +4,13 @@ defmodule Bleroma.Websocks do
   require Bleroma.Matcher
   require Poison
 
-  def start({tg_id, conn}) do
+  def start_link({tg_id, conn}) do
     ws_url = Application.get_env(:app, :websocket_url)
     access_token = conn.client.bearer_token
 
-    Logger.log(:info, "Started WS [tg_id: #{tg_id}, bearer: #{access_token}]")
+    Logger.log(:info, "Started WS [pid=#{inspect self()}, tg_id: #{tg_id}, bearer: #{access_token}]")
 
-    WebSockex.start("#{ws_url}?access_token=#{conn.client.bearer_token}&stream=user",
+    WebSockex.start_link("#{ws_url}?access_token=#{conn.client.bearer_token}&stream=user",
       __MODULE__, {tg_id, conn}, ssl_options: [
         ciphers: :ssl.cipher_suites() ++ [{:rsa, :aes_128_cbc, :sha}]
       ])
@@ -59,11 +59,6 @@ defmodule Bleroma.Websocks do
   def handle_disconnect(disconnect_map, state) do
     Logger.info("Remote close")
     super(disconnect_map, state)
-  end
-
-  def terminate(reason, state) do
-    IO.puts("Socket Terminating:\n#{inspect reason}\n\n#{inspect state}\n")
-    exit(:normal)
   end
 
 end

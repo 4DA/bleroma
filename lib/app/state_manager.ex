@@ -40,8 +40,16 @@ defmodule StateManager do
 
     Logger.log(:info, "All conns: #{inspect(conns)}")    
 
+    opts = [strategy: :one_for_one, name: Bleroma.WSSupervisor]
+
+    children = [
+      {DynamicSupervisor, strategy: :one_for_one, name: Bleroma.DynamicSupervisor}
+    ]
+
+    Supervisor.start_link(children, strategy: :one_for_one)
+
     websocks = Map.new(all_bearers, fn [tg, bearer] ->
-      {:ok, pid} = Bleroma.Websocks.start({tg, Map.get(conns, tg)})
+      {:ok, pid} = open_websocket(tg, Map.get(conns, tg))
       {tg, pid}
     end)
 
@@ -49,6 +57,15 @@ defmodule StateManager do
 
     {:ok, %StateManager{app: app, storage: storage, conns: conns, websocks: websocks}} # 
   end
+
+  def open_websocket(tg_user_id, conn) do
+      DynamicSupervisor.start_child(Bleroma.DynamicSupervisor,
+      %{
+        id: "Bleroma.Websocks.#{tg_user_id}",
+        start: {Bleroma.Websocks, :start_link, [{tg_user_id, conn}]},
+        restart: :transient
+      })
+    end
 
   @impl true
   def handle_call({:get_conn, tg_user_id}, _from, state) do
@@ -62,7 +79,7 @@ defmodule StateManager do
   def handle_call({:add_user, tg_user_id, conn}, _from, state) do
     Storage.store_auth(state.storage, tg_user_id, conn.client.bearer_token)
 
-    {:ok, pid} = Bleroma.Websocks.start({tg_user_id, conn})
+    {:ok, pid} = open_websocket(tg_user_id, conn)
 
     {:reply, :ok,
      %StateManager{state | conns: Map.put(state.conns, tg_user_id, conn),
