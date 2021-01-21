@@ -5,7 +5,6 @@ defmodule Bleroma.Matcher do
 
   alias Bleroma.CmdAnon
   alias Bleroma.Cmd
-  import Storage
   import Bleroma.Utils
   alias Bleroma.Utils
 

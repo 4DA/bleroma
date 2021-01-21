@@ -40,15 +40,13 @@ defmodule StateManager do
 
     Logger.log(:info, "All conns: #{inspect(conns)}")    
 
-    opts = [strategy: :one_for_one, name: Bleroma.WSSupervisor]
-
     children = [
       {DynamicSupervisor, strategy: :one_for_one, name: Bleroma.DynamicSupervisor}
     ]
 
     Supervisor.start_link(children, strategy: :one_for_one)
 
-    websocks = Map.new(all_bearers, fn [tg, bearer] ->
+    websocks = Map.new(all_bearers, fn [tg, _] ->
       {:ok, pid} = open_websocket(tg, Map.get(conns, tg))
       {tg, pid}
     end)

@@ -6,9 +6,6 @@ defmodule Bleroma.Websocks do
 
   def start_link({tg_id, conn}) do
     ws_url = Application.get_env(:app, :websocket_url)
-    access_token = conn.client.bearer_token
-
-
 
     WebSockex.start_link("#{ws_url}?access_token=#{conn.client.bearer_token}&stream=user",
       __MODULE__, {tg_id, conn}, ssl_options: [
