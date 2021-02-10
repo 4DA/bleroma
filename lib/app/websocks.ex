@@ -56,8 +56,9 @@ defmodule Bleroma.Websocks do
     {:ok, state}
   end
 
-  def handle_disconnect(disconnect_map, state) do
-    Logger.info("Remote close")
+  def handle_disconnect(disconnect_map, {tg_id, conn} = state) do
+    Logger.log(:info,
+      "Disconnected WS [pid=#{inspect self()}, tg_id: #{tg_id}, acc: #{conn.acct}]")
     super(disconnect_map, state)
   end
 

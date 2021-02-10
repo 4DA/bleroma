@@ -59,7 +59,8 @@ defmodule StateManager do
       %{
         id: "Bleroma.Websocks.#{tg_user_id}",
         start: {Bleroma.Websocks, :start_link, [{tg_user_id, conn}]},
-        restart: :transient
+        restart: :transient,
+        strategy: :one_for_all
       })
     end
 
