@@ -27,7 +27,7 @@ defmodule App.Mixfile do
       {:hunter, git: "https://github.com/4DA/hunter.git", branch: "master"},
       # for local debugging:
       # {:hunter, path: "deps/hunter"},
-      {:websockex, "~> 0.4.2"},
+      {:websockex, "~> 0.4.3"},
       {:html_sanitize_ex, "~> 1.4.0"},
       {:cachex, "~> 3.2"}
     ]
