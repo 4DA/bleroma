@@ -47,9 +47,13 @@ defmodule StateManager do
     Supervisor.start_link(children, strategy: :one_for_one)
 
     websocks = Map.new(all_bearers, fn [tg, _] ->
-      {:ok, pid} = open_websocket(tg, Map.get(conns, tg))
-      {tg, pid}
+      case open_websocket(tg, Map.get(conns, tg)) do
+      {:ok, pid} -> {tg, pid}
+      {:error, _} -> {tg, :error}
+      end
     end)
+
+    websocks = Map.reject(websocks, fn {_, val} -> val == :error end)
 
     {:ok, %StateManager{app: app, storage: storage, conns: conns, websocks: websocks}} # 
   end
