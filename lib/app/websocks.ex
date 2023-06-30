@@ -8,9 +8,7 @@ defmodule Bleroma.Websocks do
     ws_url = Application.get_env(:app, :websocket_url)
 
     WebSockex.start_link("#{ws_url}?access_token=#{conn.client.bearer_token}&stream=user",
-      __MODULE__, {tg_id, conn}, ssl_options: [
-        ciphers: :ssl.cipher_suites() ++ [{:rsa, :aes_128_cbc, :sha}]
-      ])
+      __MODULE__, {tg_id, conn})
   end
 
   @spec echo(pid, String.t) :: :ok
@@ -20,22 +18,9 @@ defmodule Bleroma.Websocks do
   end
 
   def handle_connect(_conn, {tg_id, conn} = state) do
-    Logger.log(:info,
-      "Connected WS [pid=#{inspect self()}, tg_id: #{tg_id}, acc: #{conn.acct}]")    
-
+    Logger.log(:info, "Connected WS [pid=#{inspect self()}, tg_id: #{tg_id}, acc: #{conn.acct}]")
     {:ok, state}
   end
-
-  # def handle_frame({:text, "Can you please reply yourself?" = msg}, state) do
-  #   Logger.info("Received Message: #{msg}")
-  #   msg = "Sure can!"
-  #   Logger.info("Sending message: #{msg}")
-  #   {:reply, {:text, msg}, state}
-  # end
-  # def handle_frame({:text, "Close the things!" = msg}, state) do
-  #   Logger.info("Received Message: #{msg}")
-  #   {:close, state}
-  # end
 
   def handle_frame({:text, msg}, {tg_id, conn} = state) do
     try do

@@ -38,6 +38,8 @@ defmodule StateManager do
     conns = Map.new(all_bearers, fn [tg, bearer] ->
       {tg, Utils.new_connection(tg, bearer)} end)
 
+    conns = Map.reject(conns, fn {_, val} -> val == nil end)
+
     Logger.log(:info, "All conns: #{inspect(conns)}")    
 
     children = [
